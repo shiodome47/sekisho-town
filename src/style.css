@@ -1,0 +1,687 @@
+/*
+ * @shiodome47/sekisho-town の見た目。.sekisho-town の中だけに効く。
+ * 色は変数で変えられる（アプリの CSS で .sekisho-town { --st-accent: …; } と書く）。
+ */
+.sekisho-town {
+  --st-ink: #3a2a22;
+  --st-paper: #f6ecd4;
+  --st-paper-2: #ead9b4;
+  --st-accent: #c2452d;
+  --st-indigo: #3d426e;
+  --st-wood: #5e3d2b;
+  --st-back: #241b16;
+  --st-font: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', 'Hiragino Kaku Gothic ProN', serif;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  overflow: hidden;
+  background: var(--st-back);
+  color: var(--st-ink);
+  font-family: var(--st-font);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.sekisho-town *,
+.sekisho-town *::before,
+.sekisho-town *::after {
+  box-sizing: border-box;
+}
+.sekisho-town .st-stage {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+}
+.sekisho-town .st-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── ボタン ─── */
+.sekisho-town .st-btn {
+  font: inherit;
+  font-weight: 700;
+  color: var(--st-ink);
+  background: var(--st-paper);
+  border: 2px solid var(--st-ink);
+  border-radius: 6px;
+  padding: 6px 14px;
+  min-height: 40px;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--st-ink);
+}
+.sekisho-town .st-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+.sekisho-town .st-btn--primary {
+  background: var(--st-accent);
+  color: #fff8ea;
+}
+.sekisho-town .st-btn--ghost {
+  background: transparent;
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--st-ink) 45%, transparent);
+}
+.sekisho-town .st-btn--big {
+  font-size: 18px;
+  padding: 10px 28px;
+}
+.sekisho-town .st-btn--hud {
+  min-height: 32px;
+  padding: 2px 10px;
+  font-size: 13px;
+}
+.sekisho-town :is(button):focus-visible {
+  outline: 3px solid #f4c860;
+  outline-offset: 2px;
+}
+
+/* ─── 上の帯（通りの名前・通行手形） ─── */
+.sekisho-town .st-hud {
+  position: absolute;
+  inset: 6px 6px auto 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.sekisho-town .st-hud > * {
+  pointer-events: auto;
+}
+.sekisho-town .st-hud__area {
+  background: var(--st-indigo);
+  color: #fff8ea;
+  font-weight: 700;
+  padding: 2px 12px;
+  border: 2px solid var(--st-ink);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.sekisho-town .st-hud__pass {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  min-width: 0;
+  background: color-mix(in srgb, var(--st-paper) 92%, transparent);
+  border: 2px solid var(--st-ink);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.sekisho-town .st-hud__pass i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--st-ink) 55%, transparent);
+}
+.sekisho-town .st-hud__pass i[data-cleared] {
+  border-style: solid;
+}
+.sekisho-town .st-hud__pass b {
+  font-size: 12px;
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.sekisho-town .st-hud__buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+/* 通りに入ったときの、名前の札 */
+.sekisho-town .st-banner {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  padding: 6px 26px;
+  background: var(--st-paper);
+  border: 3px double var(--st-ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  animation: st-banner 1.9s ease-out;
+}
+@keyframes st-banner {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  15%,
+  70% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+}
+.sekisho-town .st-toast {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  background: var(--st-accent);
+  color: #fff8ea;
+  font-weight: 700;
+  border: 2px solid var(--st-ink);
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: st-pop 0.25s ease-out;
+}
+@keyframes st-pop {
+  from {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* ─── 話の箱 ─── */
+.sekisho-town .st-dialog {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: min(calc(100% - 16px), 560px);
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  text-align: left;
+  font: inherit;
+  color: var(--st-ink);
+  background: var(--st-paper);
+  border: 3px solid var(--st-ink);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 2px var(--st-paper-2),
+    0 3px 0 var(--st-ink);
+  padding: 8px 12px 10px;
+  cursor: pointer;
+}
+.sekisho-town .st-portrait {
+  flex: none;
+  align-self: flex-end;
+  margin: -34px 0 -4px -4px;
+  filter: drop-shadow(0 1px 0 var(--st-paper)) drop-shadow(0 -1px 0 var(--st-paper)) drop-shadow(1px 0 0 var(--st-paper)) drop-shadow(-1px 0 0 var(--st-paper));
+}
+.sekisho-town .st-dialog__seal {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid var(--st-accent);
+  color: var(--st-accent);
+  font-size: 24px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  align-self: center;
+}
+.sekisho-town .st-dialog__body {
+  flex: 1;
+  min-width: 0;
+  display: block;
+}
+.sekisho-town .st-dialog__name {
+  display: inline-block;
+  background: var(--st-indigo);
+  color: #fff8ea;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 10px;
+  border-radius: 3px;
+  margin-bottom: 2px;
+}
+.sekisho-town .st-dialog__text {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 3.2em;
+}
+.sekisho-town .st-dialog__rest {
+  visibility: hidden;
+}
+.sekisho-town .st-dialog[data-who='narration'] .st-dialog__text {
+  text-align: center;
+}
+.sekisho-town .st-dialog__next {
+  color: var(--st-accent);
+  animation: st-blink 0.9s steps(2) infinite;
+}
+@keyframes st-blink {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* ─── 板（関所・絵図・メニュー） ─── */
+.sekisho-town .st-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: rgba(30, 22, 18, 0.62);
+  animation: st-fade 0.18s ease-out;
+}
+@keyframes st-fade {
+  from {
+    opacity: 0;
+  }
+}
+.sekisho-town .st-panel {
+  width: min(100%, 520px);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--st-paper);
+  border: 3px solid var(--st-ink);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 3px var(--st-paper-2),
+    0 4px 0 var(--st-ink);
+  -webkit-user-select: text;
+  user-select: text;
+}
+.sekisho-town .st-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 8px;
+  border-bottom: 2px dashed color-mix(in srgb, var(--st-ink) 35%, transparent);
+}
+.sekisho-town .st-panel__kicker {
+  margin: 0;
+  font-size: 12px;
+  color: var(--st-accent);
+  font-weight: 700;
+}
+.sekisho-town .st-panel__title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+.sekisho-town .st-panel__desc {
+  margin: 2px 0 0;
+  font-size: 13px;
+  opacity: 0.8;
+}
+.sekisho-town .st-panel__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px 12px;
+  border-top: 2px dashed color-mix(in srgb, var(--st-ink) 35%, transparent);
+}
+.sekisho-town .st-panel__foot p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sekisho-town .st-items {
+  list-style: none;
+  margin: 0;
+  padding: 6px 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.sekisho-town .st-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--st-ink) 18%, transparent);
+}
+.sekisho-town .st-item:last-child {
+  border-bottom: 0;
+}
+.sekisho-town .st-item__mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--st-ink);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff8ea;
+}
+.sekisho-town .st-item[data-done] .st-item__mark {
+  background: var(--st-accent);
+  border-color: var(--st-accent);
+}
+.sekisho-town .st-item__main {
+  flex: 1;
+  min-width: 0;
+}
+.sekisho-town .st-item__title {
+  display: block;
+  font-weight: 700;
+}
+.sekisho-town .st-item__badge:not(:empty) {
+  margin-right: 4px;
+}
+.sekisho-town .st-item__note {
+  display: block;
+  font-size: 12px;
+  opacity: 0.75;
+}
+.sekisho-town .st-item__count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.sekisho-town .st-item__bar {
+  flex: 1;
+  max-width: 120px;
+  height: 6px;
+  border: 1px solid var(--st-ink);
+  border-radius: 3px;
+  overflow: hidden;
+  background: #fffaf0;
+}
+.sekisho-town .st-item__bar span {
+  display: block;
+  height: 100%;
+  background: var(--st-accent);
+}
+.sekisho-town .st-item__actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+/* 絵図 */
+.sekisho-town .st-map {
+  display: block;
+  width: 100%;
+  max-height: 46vh;
+  padding: 0 8px;
+}
+.sekisho-town .st-map__road {
+  stroke: var(--st-wood);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.sekisho-town .st-map__area {
+  fill: #fffaf0;
+  stroke: var(--st-ink);
+  stroke-width: 0.8;
+}
+.sekisho-town .st-map__area[data-here] {
+  fill: #f4c860;
+}
+.sekisho-town .st-map__name {
+  font-size: 4.6px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: var(--st-ink);
+}
+.sekisho-town .st-map__here {
+  font-size: 4px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--st-accent);
+}
+.sekisho-town .st-map__gate {
+  fill: #fffaf0;
+  stroke: var(--st-accent);
+  stroke-width: 0.8;
+}
+.sekisho-town .st-map__gate[data-cleared] {
+  fill: var(--st-accent);
+}
+.sekisho-town .st-map__num {
+  font-size: 3.6px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: var(--st-accent);
+}
+.sekisho-town .st-map__gate[data-cleared] + .st-map__num {
+  fill: #fff8ea;
+}
+.sekisho-town .st-maplist {
+  list-style: none;
+  margin: 0;
+  padding: 4px 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 60px;
+  font-size: 13px;
+}
+.sekisho-town .st-maplist li {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+}
+.sekisho-town .st-maplist li[data-cleared] .st-maplist__title {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.sekisho-town .st-maplist__num {
+  flex: none;
+  width: 2em;
+  color: var(--st-accent);
+  font-weight: 700;
+}
+.sekisho-town .st-maplist__title {
+  flex: 1;
+  font-weight: 700;
+}
+.sekisho-town .st-maplist__place {
+  opacity: 0.8;
+}
+
+/* メニュー */
+.sekisho-town .st-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  overflow-y: auto;
+}
+.sekisho-town .st-menu__note,
+.sekisho-town .st-menu__how {
+  margin: 0;
+  font-size: 13px;
+}
+.sekisho-town .st-menu__how {
+  opacity: 0.7;
+}
+
+/* ─── はじめの画面 ─── */
+.sekisho-town .st-title {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(30, 22, 18, 0.55);
+}
+.sekisho-town .st-title__card {
+  width: min(100%, 440px);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  background: var(--st-paper);
+  border: 3px solid var(--st-ink);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 3px var(--st-paper-2),
+    0 4px 0 var(--st-ink);
+  padding: 18px 18px 16px;
+}
+.sekisho-town .st-title__sub {
+  margin: 0;
+  color: var(--st-accent);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+}
+.sekisho-town .st-title__name {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+}
+.sekisho-town .st-title__pick,
+.sekisho-town .st-title__empty {
+  margin: 6px 0 0;
+  font-weight: 700;
+}
+.sekisho-town .st-title__how {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.7;
+}
+.sekisho-town .st-courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sekisho-town .st-course {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font: inherit;
+  color: var(--st-ink);
+  background: #fffaf0;
+  border: 2px solid var(--st-ink);
+  border-left: 8px solid var(--st-accent);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--st-ink);
+  text-align: left;
+}
+.sekisho-town .st-course:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+.sekisho-town .st-course__title {
+  font-weight: 700;
+  font-size: 16px;
+}
+.sekisho-town .st-course__meta {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* ─── 指の操作（指で触れる端末だけ） ─── */
+.sekisho-town .st-pad {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  padding: 0 18px;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+  touch-action: none;
+}
+@media (hover: none), (pointer: coarse) {
+  .sekisho-town .st-pad {
+    display: flex;
+  }
+  .sekisho-town .st-title__how,
+  .sekisho-town .st-menu__how {
+    display: none;
+  }
+}
+.sekisho-town .st-pad > * {
+  pointer-events: auto;
+}
+.sekisho-town .st-stick {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: rgba(246, 236, 212, 0.28);
+  border: 2px solid rgba(246, 236, 212, 0.7);
+  display: grid;
+  place-items: center;
+  touch-action: none;
+}
+.sekisho-town .st-stick__knob {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(246, 236, 212, 0.9);
+  border: 2px solid var(--st-ink);
+  pointer-events: none;
+}
+.sekisho-town .st-pad__buttons {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.sekisho-town .st-pad__btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--st-ink);
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 2px solid var(--st-ink);
+  background: rgba(246, 236, 212, 0.9);
+  touch-action: none;
+}
+.sekisho-town .st-pad__btn--a {
+  width: 76px;
+  height: 76px;
+  background: var(--st-accent);
+  color: #fff8ea;
+  margin-bottom: 18px;
+}
+.sekisho-town .st-pad__btn:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sekisho-town .st-banner {
+    animation-duration: 1.9s;
+    animation-timing-function: steps(1);
+  }
+  .sekisho-town .st-dialog__next,
+  .sekisho-town .st-toast,
+  .sekisho-town .st-sheet {
+    animation: none;
+  }
+}

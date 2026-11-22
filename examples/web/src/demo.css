@@ -1,0 +1,93 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #241b16;
+  overscroll-behavior: none;
+}
+.demo {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.demo__game {
+  flex: 1;
+  min-height: 0;
+}
+.demo__bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 4px 12px;
+  font: 12px/1.6 system-ui, sans-serif;
+  color: #d9c7a0;
+}
+.demo__bar button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 1px solid #6b5a48;
+  border-radius: 4px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+.quiz {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(30, 22, 18, 0.7);
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
+}
+.quiz__card {
+  width: min(100%, 420px);
+  background: #f6ecd4;
+  border: 3px solid #3a2a22;
+  border-radius: 8px;
+  padding: 18px;
+  text-align: center;
+  color: #3a2a22;
+}
+.quiz__kicker {
+  margin: 0;
+  color: #c2452d;
+  font-weight: 700;
+  font-size: 13px;
+}
+.quiz__q {
+  margin: 8px 0 14px;
+  font-size: 22px;
+  font-weight: 700;
+}
+.quiz__choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.quiz__choices button,
+.quiz__close {
+  font: inherit;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 10px;
+  background: #fffaf0;
+  border: 2px solid #3a2a22;
+  border-radius: 6px;
+  box-shadow: 0 2px 0 #3a2a22;
+  cursor: pointer;
+  color: #3a2a22;
+}
+.quiz__close {
+  margin-top: 14px;
+  font-size: 14px;
+  background: transparent;
+  box-shadow: none;
+}
+.quiz__msg {
+  min-height: 1.8em;
+  margin: 10px 0 0;
+  font-weight: 700;
+}

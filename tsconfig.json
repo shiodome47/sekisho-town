@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "types": ["node", "vitest/globals", "vite/client"],
+    "paths": {
+      "@shiodome47/sekisho-town": ["./src/ui/index.ts"],
+      "@shiodome47/sekisho-town/core": ["./src/core/index.ts"],
+      "@shiodome47/sekisho-town/cast": ["./src/cast/index.ts"]
+    }
+  },
+  "include": ["src", "examples/web/src", "examples/web/vite.config.ts", "vitest.config.ts", "vitest.setup.ts", "tsup.config.ts"]
+}
