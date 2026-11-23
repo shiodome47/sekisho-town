@@ -30,6 +30,7 @@ def unit_widths():
     for k in ('gate-open', 'gate-locked', 'gate-cleared'):
         w[k] = 96  # draw.ts の GATE_ART_W
     w['water'] = 52 * 3  # 川の水（draw.ts の river。高さ 52）
+    w['courtyard'] = 150  # 城の中の景色（門の中に、小さく見える）
     w['ground'] = 110  # 地面（draw.ts の GROUND_TILE。足もとの帯より少し高い）
     w['signpost'] = w['tatefuda'] = 80  # 道しるべ・立て札（名前の長さで変わる。長いときの大きさ）
     return w
@@ -71,6 +72,8 @@ ART = {
     'wall': {},
     'alley': {},
     'pinewall': {'pinewall': True, 'holes': True},
+    # 開いた城の門の向こうに見える、城の中の景色（はしまで絵が入っている。切り出さずに使う）
+    'courtyard': {'raw': True},
     'ground': {'raw': True, 'mirror': True},
     # 川の水は、空や地面のやわらかい色に合わせて、少しうすくする（tint: まぜる色と、その割合）
     'water': {'raw': True, 'mirror': True, 'tint': ((205, 228, 230), 0.38)},
