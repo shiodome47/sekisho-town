@@ -882,11 +882,23 @@ export function drawBackdrop(
   // 地面
   c.fillStyle = s.ground
   c.fillRect(0, BASE_Y - 2, area.width, VIEW_H - BASE_Y + 2)
-  c.fillStyle = s.speck
-  for (let i = 0; i < area.width / 5; i++) {
-    const x = noise(i * 1.31 + area.width) * area.width
-    const y = BASE_Y + 4 + noise(i * 2.77) * (VIEW_H - BASE_Y - 6)
-    c.fillRect(x, y, 1 + noise(i) * 3, 1)
+  const ground = art?.images.get('ground')
+  if (ground) {
+    // 地面の絵を横にくり返し、景色の色をうすく重ねる（寺町・城は白っぽく、川端は少し緑に）
+    const th = GROUND_TILE
+    const tw = (th * ground.width) / ground.height
+    for (let x = 0; x < area.width; x += tw - 0.5) c.drawImage(ground, x, BASE_Y - 2, tw, th)
+    c.fillStyle = s.ground
+    c.globalAlpha = 0.45
+    c.fillRect(0, BASE_Y - 2, area.width, VIEW_H - BASE_Y + 2)
+    c.globalAlpha = 1
+  } else {
+    c.fillStyle = s.speck
+    for (let i = 0; i < area.width / 5; i++) {
+      const x = noise(i * 1.31 + area.width) * area.width
+      const y = BASE_Y + 4 + noise(i * 2.77) * (VIEW_H - BASE_Y - 6)
+      c.fillRect(x, y, 1 + noise(i) * 3, 1)
+    }
   }
   c.fillStyle = s.edge
   c.fillRect(0, BAND_BOTTOM + 8, area.width, VIEW_H - BAND_BOTTOM - 8)
@@ -1030,7 +1042,10 @@ export function drawExitSign(c: Ctx, area: Area, e: Exit, name: string, locked: 
     let foot = BAND_BOTTOM + 17
     if (e.side === 'up') {
       const piece = area.row.find((p) => p.exit === e.id)
-      x = piece ? piece.x + piece.w - (e.lock ? piece.w * 0.13 : 2) : e.x + 30
+      // ふつうは出口の右のはし。右どなりが名所（お地蔵さま など）で、左どなりが名所でなければ、左のはしに立てる
+      const i = piece ? area.row.indexOf(piece) : -1
+      const left = !!piece && !e.lock && !!area.row[i + 1]?.spot && !area.row[i - 1]?.spot
+      x = !piece ? e.x + 30 : left ? piece.x + 2 : piece.x + piece.w - (e.lock ? piece.w * 0.13 : 2)
       foot = BASE_Y + 3
     } else {
       shape(c, [e.x - 30, VIEW_H, e.x + 30, VIEW_H, e.x + 22, BAND_BOTTOM + 6, e.x - 22, BAND_BOTTOM + 6], '#b9b2a2', false)
@@ -1164,6 +1179,9 @@ export function drawGate(
   }
   c.restore()
 }
+
+/** 地面の絵の、1 枚の高さ */
+const GROUND_TILE = 110
 
 /** 絵の関所の幅（高さは、絵の形から決まる。キャラの 1.5 倍くらい） */
 export const GATE_ART_W = 96

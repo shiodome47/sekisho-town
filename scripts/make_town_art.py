@@ -29,6 +29,7 @@ def unit_widths():
     w['castlegate-open'] = w['castlegate']
     for k in ('gate-open', 'gate-locked', 'gate-cleared'):
         w[k] = 96  # draw.ts の GATE_ART_W
+    w['ground'] = 110  # 地面（draw.ts の GROUND_TILE。足もとの帯より少し高い）
     w['signpost'] = w['tatefuda'] = 80  # 道しるべ・立て札（名前の長さで変わる。長いときの大きさ）
     return w
 
@@ -65,6 +66,7 @@ ART = {
     'castlegate-open': {'door': True},
     'wall': {},
     'alley': {'raw': True},
+    'ground': {'raw': True, 'mirror': True},
     'open': {},
     'farbank': {},
     'signpost': {},
@@ -82,6 +84,13 @@ def build(name, opt):
         # はしまで絵が入っているもの（路地）: 切り出さずに、大きさだけ合わせる
         target = round(unit_widths()[name] * PX_PER_UNIT)
         out = im.resize((target, round(im.height * target / im.width)), Image.LANCZOS)
+        if opt.get('mirror'):
+            # 右に、うら返したものをつなぐ（横にくり返しても、つなぎ目が出ない）
+            from PIL import ImageOps
+            wide = Image.new('RGB', (out.width * 2, out.height))
+            wide.paste(out, (0, 0))
+            wide.paste(ImageOps.mirror(out), (out.width, 0))
+            out = wide
         out.save(ROOT / 'art' / 'town' / f'{name}.webp', 'WEBP', quality=80, method=6)
         print(name, out.size)
         return out
