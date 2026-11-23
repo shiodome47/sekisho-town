@@ -27,6 +27,11 @@ ART = {
     'tea': {'door': True},
     'theater': {'door': True},
     'dojo': {},
+    'sanmon': {'door': True},
+    'willow': {'holes': True},
+    'well': {'holes': True},
+    'ginkgo': {'holes': True},
+    'bell': {'holes': True},
 }
 
 
