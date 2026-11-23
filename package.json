@@ -1,22 +1,45 @@
 {
   "name": "@shiodome47/sekisho-town",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "関所めぐりの町: 時代劇の城下町を走り回って関所をさがし、学びをくり返して通行手形に印を集めるゲームの土台。中身（コース）は @shiodome47/sekisho のものを入れ替えて使う",
-  "keywords": ["gamification", "game", "learning", "sekisho", "edo", "canvas"],
+  "keywords": [
+    "gamification",
+    "game",
+    "learning",
+    "sekisho",
+    "edo",
+    "canvas"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/shiodome47/sekisho-town.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiodome47/sekisho-town.git"
+  },
   "homepage": "https://github.com/shiodome47/sekisho-town#readme",
   "bugs": "https://github.com/shiodome47/sekisho-town/issues",
   "type": "module",
-  "sideEffects": ["**/*.css"],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./core": { "types": "./dist/core/index.d.ts", "import": "./dist/core/index.js" },
-    "./cast": { "types": "./dist/cast/index.d.ts", "import": "./dist/cast/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./cast": {
+      "types": "./dist/cast/index.d.ts",
+      "import": "./dist/cast/index.js"
+    },
     "./style.css": "./dist/style.css",
     "./package.json": "./package.json"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup && node scripts/copy-css.mjs",
     "test": "vitest run",
@@ -49,5 +72,7 @@
     "vite": "^8.3.8",
     "vitest": "^5.1.1"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }
