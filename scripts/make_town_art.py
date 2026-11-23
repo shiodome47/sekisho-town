@@ -13,7 +13,27 @@ from PIL import Image
 from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parent.parent
-MAX_W = 900
+# 絵の細かさ: 画面の 1 単位あたりのピクセル。スマホ（3 倍の画面）で、ほぼそのままの細かさになる
+PX_PER_UNIT = 2.6
+# 配らない絵（いまは使っていない。元の絵は sheets/ に残す）
+SKIP = {'kido-closed', 'bridge-side'}
+
+
+def unit_widths():
+    """絵を置く幅（画面の単位）。src/ui/art.ts の ART_WIDTHS と、draw.ts の決まりから"""
+    import re
+    text = (ROOT / 'src' / 'ui' / 'art.ts').read_text()
+    body = text[text.index('ART_WIDTHS') :]
+    body = body[: body.index('}')]
+    w = {k: int(v) for k, v in re.findall(r"(\w+): (\d+)", body)}
+    w['castlegate-open'] = w['castlegate']
+    for k in ('gate-open', 'gate-locked', 'gate-cleared'):
+        w[k] = 96  # draw.ts の GATE_ART_W
+    return w
+
+
+# 横にくり返す絵の高さ（draw.ts の ART_TILES）
+TILE_H = {'stonewall': 62, 'wall': 80}
 DOOR = (52, 36, 28)
 
 ART = {
@@ -89,13 +109,16 @@ def build(name, opt):
         rgb[door] = DOOR
         alpha = np.maximum(alpha, door.astype(np.float32))
     out = Image.fromarray(np.dstack([rgb, (np.clip(alpha, 0, 1) * 255).astype(np.uint8)]), 'RGBA')
-    if out.width > MAX_W:
-        out = out.resize((MAX_W, round(out.height * MAX_W / out.width)), Image.LANCZOS)
-    out.save(ROOT / 'art' / 'town' / f'{name}.webp', 'WEBP', quality=86, method=6)
+    units = TILE_H[name] * out.width / out.height if name in TILE_H else unit_widths()[name]
+    target = round(units * PX_PER_UNIT)
+    if out.width > target:
+        out = out.resize((target, round(out.height * target / out.width)), Image.LANCZOS)
+    out.save(ROOT / 'art' / 'town' / f'{name}.webp', 'WEBP', quality=80, method=6)
     print(name, out.size, (ROOT / 'art' / 'town' / f'{name}.webp').stat().st_size // 1024, 'KB')
     return out
 
 
 if __name__ == '__main__':
     for name, opt in ART.items():
-        build(name, opt)
+        if name not in SKIP:
+            build(name, opt)

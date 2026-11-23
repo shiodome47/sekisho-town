@@ -56,7 +56,7 @@ export function placeGates(
     count.set(s.id, n + 1)
     // 2 つ目からは、右・左・右…と少しずらす
     const shift = n === 0 ? 0 : (n % 2 ? 1 : -1) * Math.ceil(n / 2) * 46
-    // 名所の絵をかくさないよう、少し右に立てる
-    return { gateId: g.id, area: s.area, spot: s.id, x: s.x + GATE_SHIFT + shift }
+    // 名所の絵・看板をかくさないよう、名所の右のはし寄りに立てる
+    return { gateId: g.id, area: s.area, spot: s.id, x: (s.stand ?? s.x + GATE_SHIFT) + shift }
   })
 }

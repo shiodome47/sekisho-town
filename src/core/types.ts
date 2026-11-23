@@ -47,6 +47,8 @@ export interface Spot {
   id: string
   name: string
   x: number
+  /** 関所が立つ場所（名所の右のはし寄り。名所の絵・看板をかくさないように）。無ければ x の少し右 */
+  stand?: number
 }
 
 /** 通り */

@@ -1,5 +1,8 @@
 import type { Area, Exit, Piece, Town } from './types'
 
+/** 関所は、名所の部品の右のはしから、これだけ内側に立つ（看板・戸口は、部品のまん中にあるので、かくさない） */
+export const GATE_INSET = 30
+
 /** 通りを作る。部品を左から並べて、幅・名所・奥への出口の位置を決める */
 export function defineArea(input: {
   id: string
@@ -32,7 +35,9 @@ export function defineArea(input: {
       ...e,
       x: e.side === 'left' ? 0 : e.side === 'right' ? width : (e.x ?? mid(e.id) ?? width / 2),
     })),
-    spots: row.filter((p) => p.spot).map((p) => ({ id: p.spot!.id, name: p.spot!.name, x: p.x + p.w / 2 })),
+    spots: row
+      .filter((p) => p.spot)
+      .map((p) => ({ id: p.spot!.id, name: p.spot!.name, x: p.x + p.w / 2, stand: p.x + p.w - Math.min(GATE_INSET, p.w / 2) })),
     map: input.map,
     photo: input.photo,
   }
@@ -91,7 +96,7 @@ export function routeBetween(town: Town, from: string, to: string): string[] | n
 }
 
 /** 町の名所を全部（通りの順） */
-export function allSpots(town: Town): { area: string; id: string; name: string; x: number }[] {
+export function allSpots(town: Town): { area: string; id: string; name: string; x: number; stand?: number }[] {
   return town.areas.flatMap((a) => a.spots.map((s) => ({ area: a.id, ...s })))
 }
 
