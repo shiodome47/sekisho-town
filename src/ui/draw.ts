@@ -802,7 +802,13 @@ export function drawSky(c: Ctx, area: Area, viewW: number, shift: number) {
 }
 
 /** 通りの背景（建物と地面）を、通りの幅いっぱいに描く。1 回描いて、絵として取っておく */
-export function drawBackdrop(c: Ctx, area: Area, state: { gateOpen: boolean }) {
+export function drawBackdrop(
+  c: Ctx,
+  area: Area,
+  state: { gateOpen: boolean },
+  /** 建物などを、絵（画像）に差し替える。種類（Piece.kind）→ 絵。あるものは、形から描かずに絵を置く */
+  art?: { images: Map<string, CanvasImageSource & { width: number; height: number }>; pixelated?: boolean },
+) {
   const s = SCENES[area.scene]
   // 地面
   c.fillStyle = s.ground
@@ -819,6 +825,14 @@ export function drawBackdrop(c: Ctx, area: Area, state: { gateOpen: boolean }) {
   c.fillRect(0, BASE_Y - 2, area.width, 5)
 
   for (const p of area.row) {
+    const img = art?.images.get(p.kind === 'castlegate' && state.gateOpen && art.images.has('castlegate-open') ? 'castlegate-open' : p.kind)
+    if (img) {
+      // 絵は、幅を部品の幅に合わせ、足もとを建物の足もとにそろえる
+      const h = (p.w * img.height) / img.width
+      c.imageSmoothingEnabled = !art?.pixelated
+      c.drawImage(img, p.x, BASE_Y - h, p.w, h)
+      continue
+    }
     c.save()
     switch (p.kind) {
       case 'shop':

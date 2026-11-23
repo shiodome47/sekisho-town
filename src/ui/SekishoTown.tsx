@@ -52,6 +52,14 @@ export interface SekishoTownProps {
   /** 町の中の進み具合（いる場所・見つけた関所・見た話）。渡すと、アプリが保存する */
   save?: TownSave
   onSave?: (save: TownSave) => void
+  /**
+   * 建物・木などを、絵（画像）に差し替える。pieces は、種類（Piece.kind。'shop'・'inn'・'kura' など）→ 絵の URL。
+   * 書いた種類だけが絵になり、ほかは部品が形から描く。城の門が開いた絵は 'castlegate-open'。
+   * pixelated を true にすると、ドット絵をぼかさずに大きくする
+   */
+  art?: { pieces: Record<string, string>; pixelated?: boolean }
+  /** はじめの画面を出さずに、前のつづきから始める（アプリの練習の画面から戻ってきたとき） */
+  autoResume?: boolean
   /** 「ゲームを出る」を押したとき（渡すと、メニューに出る） */
   onExit?: () => void
   /** 止める（アプリが、上に練習の画面を出しているときなど） */
@@ -81,6 +89,8 @@ export function SekishoTown({
   renderStamp,
   save: saveProp,
   onSave,
+  art,
+  autoResume = false,
   onExit,
   paused = false,
   muted = true,
@@ -186,6 +196,15 @@ export function SekishoTown({
     [town, updateSave],
   )
 
+  // 前のつづきから（はじめの画面を出さない）
+  const resumed = useRef(false)
+  useEffect(() => {
+    if (!autoResume || resumed.current || screen !== 'title' || !course) return
+    if (!fixedCourseId && saveRef.current.courseId !== course.id) return
+    resumed.current = true
+    begin(course.id)
+  }, [autoResume, screen, course, fixedCourseId, begin])
+
   const keepPlace = useCallback(() => {
     const w = worldRef.current
     updateSave({ area: w.area, x: Math.round(w.player.x), y: Math.round(w.player.y), face: w.player.face })
@@ -200,12 +219,17 @@ export function SekishoTown({
     [course, lap, updateSave],
   )
 
-  // はじめの話
+  // はじめの話。町の外（アプリの練習の画面）で関所をこえて戻ってきたときは、番人の話のつづきから
   useEffect(() => {
     if (screen !== 'play' || !course || !view || dialog) return
-    if (view.started || complete || save.flags?.includes(flagKey(course.id, lap, 'intro'))) return
-    addFlag('intro')
-    say(labels.intro(storyInfo()))
+    const flags = saveRef.current.flags ?? []
+    if (!view.started && !complete && !flags.includes(flagKey(course.id, lap, 'intro'))) {
+      addFlag('intro')
+      say(labels.intro(storyInfo()))
+    } else if (view.cleared > 0 && !finaleDone && !flags.includes(flagKey(course.id, lap, `told${view.cleared}`))) {
+      addFlag(`told${view.cleared}`)
+      say(labels.afterClear(storyInfo()))
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, course?.id, lap])
 
@@ -241,6 +265,7 @@ export function SekishoTown({
       addFlag('finale')
       say(labels.ending(storyInfo()), () => setShowMenu(true))
     } else {
+      if (view) addFlag(`told${view.cleared}`)
       say(labels.afterClear(storyInfo(lastCleared.current)))
     }
   }
@@ -333,8 +358,17 @@ export function SekishoTown({
   const rootRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const backdrops = useRef(new Map<string, HTMLCanvasElement>())
-  const live = useRef({ gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale, reduced: false })
-  live.current = { ...live.current, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale }
+  const artImages = useImages(useMemo(() => Object.values(art?.pieces ?? {}), [art]))
+  const pieceArt = useMemo(() => {
+    const images = new Map<string, HTMLImageElement>()
+    for (const [kind, url] of Object.entries(art?.pieces ?? {})) {
+      const img = artImages.get(url)
+      if (img) images.set(kind, img)
+    }
+    return { images, pixelated: art?.pixelated }
+  }, [art, artImages])
+  const live = useRef({ pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale, reduced: false })
+  live.current = { ...live.current, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale }
 
   useEffect(() => {
     const m = window.matchMedia?.('(prefers-reduced-motion: reduce)')
@@ -384,7 +418,7 @@ export function SekishoTown({
         b.height = Math.ceil(VIEW_H * k)
         const bc = b.getContext('2d')!
         bc.scale(k, k)
-        drawBackdrop(bc, area, { gateOpen })
+        drawBackdrop(bc, area, { gateOpen }, live.current.pieceArt)
         for (const e of area.exits) {
           const to = live.current.town.areas.find((a) => a.id === e.to)
           drawExitSign(bc, area, e, to?.name ?? '', !!e.lock && !gateOpen)
@@ -527,7 +561,7 @@ export function SekishoTown({
   }, [updateSave])
 
   // 進み具合が変わったら、背景を描き直す（城の門が開く）
-  useEffect(() => backdrops.current.clear(), [complete, town])
+  useEffect(() => backdrops.current.clear(), [complete, town, pieceArt])
   useEffect(() => {
     if (!toast) return
     const id = window.setTimeout(() => setToast(null), 1800)

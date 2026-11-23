@@ -55,6 +55,8 @@ import '@shiodome47/sekisho-town/style.css'
 | `save` / `onSave` | 町の中の進み具合。渡すと、アプリが保存する（渡さなければ、開いている間だけ覚える） |
 | `placements` | 関所を立てる名所を決める（`{ コースの id: { 関所の id: 名所の id } }`）。無い関所は自動 |
 | `town` | 町。無ければ、はじめから入っている「城下町」（`JOKAMACHI`） |
+| `art` | 建物・木などを、絵（画像）に差し替える（下の「町の絵を変える」） |
+| `autoResume` | はじめの画面を出さずに、前のつづきから始める（練習の画面から戻ってきたとき） |
 | `paused` | 止める（アプリが上に練習の画面を出している間） |
 | `onExit` | 渡すと、メニューに「ゲームを出る」が出る |
 | `labels` | 文言・せりふの一部を差し替え |
@@ -94,6 +96,20 @@ python3 scripts/make_sprites.py                                 # どの番号�
 ```
 
 （Python と Pillow・numpy・scipy が要ります。）
+
+### 町の絵を変える
+
+町の絵は、3 つのやり方で変えられます。小さく直すほうから:
+
+1. **色・形を直す**: `src/ui/draw.ts`。建物・木などの種類ごとに、関数が 1 つずつあります（`shop`・`inn`・`kura`・`sanmon`・`tenshu` など）。空・地面の色は `SCENES`
+2. **絵（画像）に差し替える**: `art` に、種類 → 絵の URL を書くと、その種類だけが絵になります（ほかは、形から描いたまま）。ドット絵なら `pixelated: true`
+
+   ```tsx
+   <SekishoTown art={{ pieces: { shop: '/town/shop.png', inn: '/town/inn.png' }, pixelated: true }} … />
+   ```
+
+   絵は、幅を部品の幅に合わせ、足もとをそろえて置きます（背景は透明に）。城の門が開いた絵は `castlegate-open`
+3. **町の並びを変える**: 下の「町を変える」
 
 ### 町を変える
 
