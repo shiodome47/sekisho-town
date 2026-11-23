@@ -157,7 +157,7 @@ const player = createSoundPlayer({
    <SekishoTown town={town} art={{ pieces }} … />
    ```
 
-   - 絵は、幅を部品の幅に合わせ、足もとをそろえて置きます（背景は透明に）。城の門が開いた絵は `castlegate-open`、半分開いた絵は `castlegate-half`（印が全部そろったあと、はじめて門の前に来たときに、閉 → 半分 → 開、と開く。門の中の透明なところには、城の中の景色を部品が描く）
+   - 絵は、幅を部品の幅に合わせ、足もとをそろえて置きます（背景は透明に）。城の門が開いた絵は `castlegate-open`、半分開いた絵は `castlegate-half`（印が全部そろったあと、はじめて門の前に来たときに、閉 → 半分 → 開、と開く。門の中の透明なところには、城の中の景色が見える。絵は `courtyard`。無ければ、部品が形から描く）
    - 道しるべは `signpost`（矢印の板。左向きは、うら返す）と `tatefuda`（立て札）、路地は `alley`、川の向こう岸の家並みは `farbank`（横にくり返す）。通りの名前は、部品が板に描き足す
    - 川の水は `water`、川岸の草は `reeds`、遠くの山なみは `mountains`（どれも横にくり返す）
    - 関所の絵は `gate-open`・`gate-locked`・`gate-cleared`（番号・のぼりの文字・印は、部品が上から描き足す）

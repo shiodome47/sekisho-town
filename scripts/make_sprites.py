@@ -22,8 +22,13 @@ CAST = {
         'poses': {'stand': 8, 'walk': 9, 'run': 10, 'jump': 11, 'wave': 13, 'point': 14, 'cheer': 15,
                   'surprised': 16, 'tired': 17, 'ready': 18, 'laugh': 19},
         'faces': {'happy': 4, 'surprised': 5, 'sad': 6, 'keen': 7},
-        # 横から見た、歩く・走る絵（左足が前・右足が前）。別のシートから取る。足音に合わせて、交互に出す
-        'extra': ('futa-move', {'walk1': 0, 'walk2': 1, 'run1': 2, 'run2': 3}),
+        # 横から見た、歩く・走る絵。別のシートから取る（シート, こまの表, 頭の位置をそろえるか）。
+        # どちらも 6 こま（足が開く → すれ違う → 蹴り出す、を左右 1 回ずつ）。足音が鳴るときが 1・4 こま目。
+        # 頭の位置をそろえて、続けて出したときに体が前後にがたつかないようにする
+        'extra': [
+            ('futa-walk', {'walk1': 0, 'walk2': 1, 'walk3': 2, 'walk4': 3, 'walk5': 4, 'walk6': 5}, True),
+            ('futa-run', {'run1': 0, 'run2': 1, 'run3': 2, 'run4': 3, 'run5': 4, 'run6': 5}, True),
+        ],
     },
     'goinkyo': {
         'poses': {'stand': 8, 'walk': 9, 'wave': 10, 'listen': 11, 'point': 12, 'teach': 13, 'bow': 14,
@@ -71,6 +76,20 @@ def pack(images, width=1024, gap=2):
     return places, (width, y + row)
 
 
+def center_on_head(im):
+    """頭（絵の上 3 割）のまん中が、絵のまん中に来るように、左右に透明なところを足す。
+    こまごとに足の開き方がちがっても、頭の位置がそろうので、続けて出したときに体が前後にがたつかない"""
+    import numpy as np
+    a = np.asarray(im)[..., 3]
+    top = a[: max(1, round(im.height * 0.3))]
+    xs = np.nonzero(top.max(axis=0) > 40)[0]
+    ax = round((xs.min() + xs.max()) / 2)
+    half = max(ax, im.width - ax)
+    out = Image.new('RGBA', (half * 2, im.height), (0, 0, 0, 0))
+    out.paste(im, (half - ax, 0))
+    return out
+
+
 def build(name, spec):
     _, poses = cut(ROOT / 'art' / 'sheets' / f'{name}.webp')
     stand = poses[spec['poses']['stand']][1]
@@ -82,14 +101,16 @@ def build(name, spec):
             k = s if s else FACE_H / im.height
             im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
             items.append((kind, key, im))
-    if 'extra' in spec:
-        sheet, table = spec['extra']
+    for sheet, table, align in spec.get('extra', []):
         _, more = cut(ROOT / 'art' / 'sheets' / f'{sheet}.webp')
-        # はじめの絵（歩く）の高さを、立ちポーズと同じにする。ほかも同じ割合で縮める
+        # はじめの絵の高さを、立ちポーズと同じにする。ほかも同じ割合で縮める
         k = BODY_H / more[next(iter(table.values()))][1].height
         for key, i in table.items():
             im = more[i][1]
-            items.append(('poses', key, im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)))
+            im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+            if align:
+                im = center_on_head(im)
+            items.append(('poses', key, im))
     places, size = pack([im for _, _, im in items])
     atlas = Image.new('RGBA', size, (0, 0, 0, 0))
     frames = {'poses': {}, 'faces': {}}

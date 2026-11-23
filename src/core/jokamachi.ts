@@ -14,7 +14,7 @@ export const JOKAMACHI: Town = {
   id: 'jokamachi',
   name: '城下町',
   start: { area: 'kido', x: 430 },
-  finale: { area: 'shiro', x: 400 },
+  finale: { area: 'shiro', x: 300 },
   areas: [
     defineArea({
       id: 'kido',
@@ -154,13 +154,14 @@ export const JOKAMACHI: Town = {
       name: '城内',
       scene: 'castle',
       row: [
-        { kind: 'stonewall', w: 160 },
-        { kind: 'pine', w: 90 },
+        // 大手門ごしに見える景色と同じ並び: 左に石垣、天守、その右に松、右に石垣
+        { kind: 'stonewall', w: 150 },
         { kind: 'tenshu', w: 300 },
+        { kind: 'open', w: 40 },
         { kind: 'pine', w: 90 },
-        { kind: 'stonewall', w: 160 },
+        { kind: 'stonewall', w: 150 },
       ],
-      exits: [{ id: 's', side: 'down', x: 400, to: 'ote', at: 'gate' }],
+      exits: [{ id: 's', side: 'down', x: 470, to: 'ote', at: 'gate' }],
       map: { x: 90, y: 40 },
     }),
   ],

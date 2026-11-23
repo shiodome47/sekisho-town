@@ -785,7 +785,7 @@ function open(c: Ctx, p: P) {
 // ─── 絵に差し替えたとき ─────────────────────────────────────
 
 /** 開いた城の門の向こうに見える、城の中（明るい空・遠くの天守・奥へ続く道）。h は、門の絵の高さ */
-function courtyard(c: Ctx, p: P, h: number) {
+function courtyard(c: Ctx, p: P, h: number, img?: Img) {
   const x = p.x + p.w * 0.27
   const w = p.w * 0.46
   const y = BASE_Y - h * 0.54
@@ -794,6 +794,19 @@ function courtyard(c: Ctx, p: P, h: number) {
   c.beginPath()
   c.rect(x, y, w, BASE_Y - y)
   c.clip()
+  if (img) {
+    // 城の中の景色の絵（art の courtyard）を、門の中いっぱいに置く（はみ出すところは切る。下をそろえる）
+    const gh = BASE_Y - y
+    const k = Math.max(w / img.width, gh / img.height)
+    c.drawImage(img, cx - (img.width * k) / 2, BASE_Y - img.height * k, img.width * k, img.height * k)
+    const shade = c.createLinearGradient(0, y, 0, y + gh * 0.3)
+    shade.addColorStop(0, 'rgba(45, 28, 16, 0.5)')
+    shade.addColorStop(1, 'rgba(45, 28, 16, 0)')
+    c.fillStyle = shade
+    c.fillRect(x, y, w, gh * 0.3)
+    c.restore()
+    return
+  }
   const sky = c.createLinearGradient(0, y, 0, BASE_Y)
   sky.addColorStop(0, '#bcdbe6')
   sky.addColorStop(0.7, '#f4ead0')
@@ -984,7 +997,7 @@ export function drawBackdrop(
     const img = art?.images.get(gateArt && art.images.has(gateArt) ? gateArt : p.kind)
     if (img) {
       // 開いた城の門: 門の中（絵の透明なところ）に、城の中の景色を描く
-      if (gate > 0) courtyard(c, p, (p.w * img.height) / img.width)
+      if (gate > 0) courtyard(c, p, (p.w * img.height) / img.width, art?.images.get('courtyard'))
       // 川の景色では、絵の後ろに川を描く
       if (area.scene === 'river') river(c, p)
       c.imageSmoothingEnabled = !art?.pixelated

@@ -11,7 +11,8 @@ export interface Character {
   /**
    * 体のこま。stand（立つ）は必ず要る。walk・run・jump・cheer・surprised・point・laugh・bow など、
    * 無いものは stand で代わりにする。絵は右向き（左向きは、部品がうら返す）。
-   * 横から見た walk1・walk2（歩く。左足が前・右足が前）、run1・run2（走る）があれば、足音に合わせて交互に出す
+   * 横から見た、歩く・走る絵（walk1…・run1…）があれば、足音に合わせて出す。
+   * 6 こま（足が開く → すれ違う → 蹴って浮く、を左右 1 回ずつ）なら順に、2 こま（左足が前・右足が前）なら交互に
    */
   poses: Record<string, Frame>
   /** 顔のこま（話のときに出す）。happy・surprised・sad・keen */
