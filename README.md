@@ -117,6 +117,7 @@ python3 scripts/make_sprites.py                                 # どの番号�
    ```
 
    - 絵は、幅を部品の幅に合わせ、足もとをそろえて置きます（背景は透明に）。城の門が開いた絵は `castlegate-open`
+   - 道しるべは `signpost`（矢印の板。左向きは、うら返す）と `tatefuda`（立て札）、路地は `alley`、川の向こう岸の家並みは `farbank`（横にくり返す）。通りの名前は、部品が板に描き足す
    - 関所の絵は `gate-open`・`gate-locked`・`gate-cleared`（番号・のぼりの文字・印は、部品が上から描き足す）
    - 店の名前（`sign`）は、絵の上に看板として描き足します（場所は `src/ui/draw.ts` の `ART_SIGNS`）
    - 石垣など、横にくり返す絵は `ART_TILES`。ドット絵なら `pixelated: true`

@@ -29,6 +29,8 @@ export const ART_WIDTHS: Record<string, number> = {
   jizo: 46,
   bridge: 120,
   pier: 260,
+  alley: 76,
+  open: 120,
 }
 
 /**

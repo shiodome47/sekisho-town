@@ -628,13 +628,31 @@ function tenshu(c: Ctx, p: P) {
 
 // ─── 川の景色 ─────────────────────────────────────
 
+type Img = CanvasImageSource & { width: number; height: number }
+/** 向こう岸の家並みの絵（drawBackdrop が、描く前に入れる） */
+let farBank: Img | undefined
+
+
 function river(c: Ctx, p: P) {
   const { x, w } = p
-  // 向こう岸
-  for (let i = 0; i < w / 40 + 1; i++) {
-    const hx = x + i * 40
-    box(c, hx + 4, 86 + noise(hx) * 6, 30, 22, '#c9b08a')
-    shape(c, [hx, 88 + noise(hx) * 6, hx + 38, 88 + noise(hx) * 6, hx + 30, 76, hx + 8, 76], TILE)
+  if (farBank) {
+    // 向こう岸の家並みの絵を、通りの左のはしから、横にくり返す
+    const h = 36
+    const tw = (h * farBank.width) / farBank.height
+    c.save()
+    c.beginPath()
+    c.rect(x, 110 - h, w, h)
+    c.clip()
+    c.globalAlpha = 0.9
+    for (let tx = Math.floor(x / tw) * tw; tx < x + w; tx += tw - 0.5) c.drawImage(farBank, tx, 110 - h, tw, h)
+    c.restore()
+  } else {
+    // 向こう岸
+    for (let i = 0; i < w / 40 + 1; i++) {
+      const hx = x + i * 40
+      box(c, hx + 4, 86 + noise(hx) * 6, 30, 22, '#c9b08a')
+      shape(c, [hx, 88 + noise(hx) * 6, hx + 38, 88 + noise(hx) * 6, hx + 30, 76, hx + 8, 76], TILE)
+    }
   }
   box(c, x, 106, w, 10, '#8f9a62', false)
   // 水
@@ -860,6 +878,7 @@ export function drawBackdrop(
   art?: { images: Map<string, CanvasImageSource & { width: number; height: number }>; pixelated?: boolean },
 ) {
   const s = SCENES[area.scene]
+  farBank = art?.images.get('farbank')
   // 地面
   c.fillStyle = s.ground
   c.fillRect(0, BASE_Y - 2, area.width, VIEW_H - BASE_Y + 2)
@@ -988,7 +1007,38 @@ export function drawBackdrop(
 }
 
 /** 道しるべ（出口の先の通りの名前） */
-export function drawExitSign(c: Ctx, area: Area, e: Exit, name: string, locked: boolean) {
+export function drawExitSign(c: Ctx, area: Area, e: Exit, name: string, locked: boolean, images?: Map<string, Img>) {
+  const post = images?.get('signpost')
+  const board = images?.get('tatefuda')
+  if (post && (e.side === 'left' || e.side === 'right')) {
+    // 絵の道しるべ（矢印の板）。左向きは、うら返す
+    const size = Math.max(52, ([...name].length * 9 + 22) / 0.86)
+    const x = e.side === 'left' ? 8 + size / 2 : area.width - 8 - size / 2
+    c.save()
+    c.translate(x, 0)
+    if (e.side === 'left') c.scale(-1, 1)
+    c.drawImage(post, -size / 2, BASE_Y + 5 - size, size, size)
+    c.restore()
+    text(c, name, x + (e.side === 'left' ? 1 : -1) * size * 0.03, BASE_Y + 5 - size * 0.67, 9, '#3b2415')
+    return
+  }
+  if (board && (e.side === 'up' || e.side === 'down')) {
+    // 絵の立て札。奥への出口は、出口の部品の右のはしに立てる。手前への出口は、石の道のわきに
+    const label = locked ? '閉' : `${e.side === 'up' ? '▲' : '▼'}${name}`
+    const size = Math.max(40, ([...label].length * 9 + 12) / 0.8)
+    let x = e.x + 44
+    let foot = BAND_BOTTOM + 17
+    if (e.side === 'up') {
+      const piece = area.row.find((p) => p.exit === e.id)
+      x = piece ? piece.x + piece.w - (e.lock ? piece.w * 0.13 : 2) : e.x + 30
+      foot = BASE_Y + 3
+    } else {
+      shape(c, [e.x - 30, VIEW_H, e.x + 30, VIEW_H, e.x + 22, BAND_BOTTOM + 6, e.x - 22, BAND_BOTTOM + 6], '#b9b2a2', false)
+    }
+    c.drawImage(board, x - size / 2, foot - size, size, size)
+    text(c, label, x, foot - size * 0.61, 9, locked ? RED : '#3b2415')
+    return
+  }
   const label = locked ? '閉' : name
   const w = Math.max(30, [...label].length * 8 + 12)
   if (e.side === 'left' || e.side === 'right') {

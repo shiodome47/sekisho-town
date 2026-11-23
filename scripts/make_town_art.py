@@ -29,11 +29,12 @@ def unit_widths():
     w['castlegate-open'] = w['castlegate']
     for k in ('gate-open', 'gate-locked', 'gate-cleared'):
         w[k] = 96  # draw.ts の GATE_ART_W
+    w['signpost'] = w['tatefuda'] = 80  # 道しるべ・立て札（名前の長さで変わる。長いときの大きさ）
     return w
 
 
 # 横にくり返す絵の高さ（draw.ts の ART_TILES）
-TILE_H = {'stonewall': 62, 'wall': 80}
+TILE_H = {'stonewall': 62, 'wall': 80, 'farbank': 36}
 DOOR = (52, 36, 28)
 
 ART = {
@@ -63,6 +64,11 @@ ART = {
     'bridge-side': {'holes': True},
     'castlegate-open': {'door': True},
     'wall': {},
+    'alley': {'raw': True},
+    'open': {},
+    'farbank': {},
+    'signpost': {},
+    'tatefuda': {},
     'gate-open': {'holes': True},
     'gate-locked': {'holes': True},
     'gate-cleared': {'holes': True},
@@ -72,6 +78,13 @@ ART = {
 
 def build(name, opt):
     im = Image.open(ROOT / 'art' / 'town' / 'sheets' / f'{name}.webp').convert('RGB')
+    if opt.get('raw'):
+        # はしまで絵が入っているもの（路地）: 切り出さずに、大きさだけ合わせる
+        target = round(unit_widths()[name] * PX_PER_UNIT)
+        out = im.resize((target, round(im.height * target / im.width)), Image.LANCZOS)
+        out.save(ROOT / 'art' / 'town' / f'{name}.webp', 'WEBP', quality=80, method=6)
+        print(name, out.size)
+        return out
     a = np.asarray(im).astype(np.int16)
     mx, mn = a.max(axis=2), a.min(axis=2)
     pale = (mn > 232) & ((mx - mn) < 18)
