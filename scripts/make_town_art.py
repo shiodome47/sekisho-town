@@ -40,6 +40,9 @@ ART = {
     'tenshu': {},
     'jizo': {},
     'bridge': {'holes': True},
+    'bridge-side': {'holes': True},
+    'castlegate-open': {'door': True},
+    'wall': {},
     'pier': {'holes': True},
 }
 
@@ -90,23 +93,6 @@ def build(name, opt):
     return out
 
 
-def open_gate():
-    """大手門の、開いた絵を作る（とびらのところを、暗い色でぬる）。開いた絵をもらったら、これはやめる"""
-    im = Image.open(ROOT / 'art' / 'town' / 'castlegate.webp').convert('RGBA')
-    w, h = im.size
-    x0, x1, y0 = round(w * 0.272), round(w * 0.728), round(h * 0.478)
-    door = Image.new('RGBA', (x1 - x0, h - y0), DOOR + (255,))
-    # 奥の明るさ（下のほうを、少し明るく）
-    px = door.load()
-    for y in range(door.height):
-        t = y / door.height
-        for x in range(door.width):
-            px[x, y] = (round(52 + 70 * t * t), round(36 + 52 * t * t), round(28 + 34 * t * t), 255)
-    im.paste(door, (x0, y0))
-    im.save(ROOT / 'art' / 'town' / 'castlegate-open.webp', 'WEBP', quality=86, method=6)
-
-
 if __name__ == '__main__':
     for name, opt in ART.items():
         build(name, opt)
-    open_gate()

@@ -744,7 +744,10 @@ function open(c: Ctx, p: P) {
 // ─── 絵に差し替えたとき ─────────────────────────────────────
 
 /** 横にくり返して並べる絵と、その高さ */
-const ART_TILES: Record<string, number> = { stonewall: 62, wall: 46 }
+const ART_TILES: Record<string, number> = { stonewall: 62, wall: 80 }
+
+/** 高さを決めて置く絵（奥へ渡る橋は、たてにつぶして、川をまたぐ長さにする）。[高さ, 足もとを下げる量] */
+const ART_HEIGHTS: Record<string, [number, number]> = { bridge: [92, 8] }
 
 /**
  * 絵の建物に付ける看板の場所（絵の幅・高さに対する割合）と形。
@@ -890,8 +893,9 @@ export function drawBackdrop(
         continue
       }
       // 絵は、幅を部品の幅に合わせ、足もとを建物の足もとにそろえる
-      const h = (p.w * img.height) / img.width
-      c.drawImage(img, p.x, BASE_Y - h, p.w, h)
+      const fixed = ART_HEIGHTS[p.kind]
+      const h = fixed ? fixed[0] : (p.w * img.height) / img.width
+      c.drawImage(img, p.x, BASE_Y + (fixed ? fixed[1] : 0) - h, p.w, h)
       if (p.sign) artSign(c, p, h)
       continue
     }

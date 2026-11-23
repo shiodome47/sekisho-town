@@ -23,11 +23,11 @@ export const ART_WIDTHS: Record<string, number> = {
   ginkgo: 160,
   bell: 130,
   kido: 190,
-  castlegate: 250,
-  toro: 60,
-  tenshu: 215,
-  jizo: 56,
-  bridge: 230,
+  castlegate: 230,
+  toro: 50,
+  tenshu: 210,
+  jizo: 46,
+  bridge: 120,
   pier: 260,
 }
 

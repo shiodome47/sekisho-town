@@ -103,7 +103,7 @@ python3 scripts/make_sprites.py                                 # どの番号�
 
 1. **色・形を直す**: `src/ui/draw.ts`。建物・木などの種類ごとに、関数が 1 つずつあります（`shop`・`inn`・`kura`・`sanmon`・`tenshu` など）。空・地面の色は `SCENES`
 2. **絵（画像）に差し替える**: `art` に、種類 → 絵の URL を書くと、その種類だけが絵になります（ほかは、形から描いたまま）。
-   部品には、キャラに合わせた建物の絵が入っています（`@shiodome47/sekisho-town/art/<種類>.webp`。いまは shop・inn・house・notice・tower・kura・pine・tea・theater・dojo）。
+   部品には、キャラに合わせた建物の絵が入っています（`@shiodome47/sekisho-town/art/<種類>.webp`。城下町の建物・木がひととおり入っています。一覧は `art/town/`）。
    絵は大きく置くので、`artTown` で町の部品の幅を絵に合わせます
 
    ```tsx
