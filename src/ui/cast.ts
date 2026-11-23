@@ -29,6 +29,17 @@ export interface Cast {
   rival?: Character
   /** 関所の番人（関所のわきに立ち、関所での話に顔が出る）。無ければ、話には「関」の印だけ */
   keeper?: Character
+  /** 町の人（名所の前に立っていて、話しかけられる）。無くてもよい */
+  people?: TownPerson[]
+}
+
+/** 町の人 1 人 */
+export interface TownPerson {
+  /** せりふを決めるときの名前（labels.personTalk に渡る。'chaya' など） */
+  id: string
+  character: Character
+  /** 立つ名所の id（'chaya'・'gofuku' など。その名所の建物の、左寄りに立つ）。町に無い名所なら、出ない */
+  spot: string
 }
 
 export const poseOf = (ch: Character, pose: string): Frame => ch.poses[pose] ?? ch.poses.stand

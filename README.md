@@ -84,6 +84,8 @@ save(changes)
 
 `cast` は、主人公（`hero`）・案内役（`guide`）・ライバル（`rival`）・関所の番人（`keeper`）。番人を渡すと、関所の左わきに立ち、関所での話に顔が出ます（渡さなければ、話には「関」の印だけ）。
 
+町の人（`people`）は、名所の前に立っていて、話しかけられます。1 人は `{ id, character, spot }`（`spot` は、立つ名所の id）。せりふは `labels.personTalk(id, s, n)` で決めます（はじめから入っているのは、茶屋の娘・呉服屋の主人・寺の小僧・船頭）。
+
 
 `Character` は、こまを並べた 1 枚の絵（`image`）と、こまの場所（`poses`・`faces`）です。
 

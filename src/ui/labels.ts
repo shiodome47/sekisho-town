@@ -1,8 +1,13 @@
 /** 画面の文言と、話（せりふ）。日本語が既定。<SekishoTown labels={{ … }} /> で一部だけ差し替えられる */
 
-/** せりふ 1 つ。who は 'hero'・'guide'・'rival'（登場人物）か、'keeper'（関所の番人）・'narration'（語り） */
+/**
+ * せりふ 1 つ。who は 'hero'・'guide'・'rival'（登場人物）か、'keeper'（関所の番人）・'narration'（語り）・
+ * 'person'（町の人。person に、その人の id）
+ */
 export interface Line {
-  who: 'hero' | 'guide' | 'rival' | 'keeper' | 'narration'
+  who: 'hero' | 'guide' | 'rival' | 'keeper' | 'narration' | 'person'
+  /** who が 'person' のとき、町の人の id */
+  person?: string
   text: string
   /** 顔（happy・surprised・sad・keen） */
   face?: string
@@ -64,6 +69,8 @@ export interface Labels {
   guideTalk: (s: StoryInfo, n: number) => Line[]
   /** ライバルに話しかけたとき */
   rivalTalk: (s: StoryInfo, n: number) => Line[]
+  /** 町の人に話しかけたとき（id は町の人の id、n は、その人に話しかけた回数）。空を返すと、何も言わない */
+  personTalk: (id: string, s: StoryInfo, n: number) => Line[]
   /** 鍵のかかった関所（before は、先にこえる関所の名前） */
   gateLocked: (before: string) => Line[]
   /** 関所をこえたあと */
@@ -149,6 +156,34 @@ export const JA_LABELS: Labels = {
               : { who: 'rival', face: 'keen', text: `まだ ${s.rest}つも のこってるのか？ ${where(s)}は もう 見たか？` },
           ]
         : [{ who: 'rival', face: 'surprised', text: 'くっ、先を こされたか…。早く お城へ 行けよ！' }],
+  personTalk: (id, s, n) => {
+    const say = (text: string, face = 'happy'): Line => ({ who: 'person', person: id, face, text })
+    const hint = s.next ? `そういえば 「${s.next.area}」の 「${s.next.spot}」に 関所が 立ったって 聞いたよ。` : 'もう 印が そろったの？ お城の 門が 開くよ！'
+    const talk: Record<string, Line[][]> = {
+      chaya: [
+        [say('いらっしゃい！ おだんご、やきたてだよ。', 'keen'), say('関所めぐり、がんばってね。走ると おなかが すくでしょ？')],
+        [say(hint, 'keen')],
+        [say('くり返して おぼえるのが いちばん。おだんごも、毎日 こねて おいしく なるんだよ。')],
+      ],
+      gofukuya: [
+        [say('これは これは、関所めぐりの お客さん。いい 反物が 入ってますよ。', 'keen'), say('…おっと、いまは それどころじゃ ないですな。ほっほっ。')],
+        [say(`町の うわさですがね。${hint}`, 'keen')],
+        [say('あきないも わざも、毎日の つみ重ね ですよ。')],
+      ],
+      kozo: [
+        [say('おはよう ございます。…あ、もう 昼でしたか。', 'surprised'), say('まいにち ほうきで はいて います。はいても はいても、葉っぱが 落ちて きます。')],
+        [say('でも、まいにち はくと、手が おぼえるんです。おしょうさまが そう 言ってました。')],
+        [say(hint, 'keen')],
+      ],
+      sendo: [
+        [say('おう、ぼうず！ 関所めぐりか。いい 足を してるな。', 'keen'), say('川の むこうへは、太鼓橋を 渡りな。本町通りに 出るぜ。')],
+        [say(hint, 'keen')],
+        [say('さおの さし方も、千回 やって やっと 一人前よ。あせるな あせるな。')],
+      ],
+    }
+    const lines = talk[id]
+    return lines ? lines[n % lines.length] : []
+  },
   gateLocked: (before) => [{ who: 'keeper', face: 'keen', text: `この関所は まだ 開かぬ。先に 「${before}」を こえて まいれ。` }],
   afterClear: (s) =>
     s.next

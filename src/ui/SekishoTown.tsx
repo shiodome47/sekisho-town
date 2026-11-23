@@ -71,7 +71,7 @@ export interface SekishoTownProps {
   className?: string
 }
 
-type Npc = Thing & { kind: 'guide' | 'rival'; ch: Character; face: 1 | -1 }
+type Npc = Thing & { kind: 'guide' | 'rival' | 'person'; ch: Character; face: 1 | -1 }
 type GateThing = Thing & { kind: 'gate'; gate: TownGate }
 
 /**
@@ -140,9 +140,9 @@ export function SekishoTown({
   const [showMenu, setShowMenu] = useState(false)
   const [events, setEvents] = useState<ClearEvent[]>([])
   const [toast, setToast] = useState<{ text: string; key: number } | null>(null)
-  const talks = useRef({ guide: 0, rival: 0 })
+  const talks = useRef<Record<string, number>>({ guide: 0, rival: 0 })
 
-  const images = useImages(useMemo(() => [cast.hero.image, cast.guide.image, ...(cast.rival ? [cast.rival.image] : []), ...(cast.keeper ? [cast.keeper.image] : [])], [cast]))
+  const images = useImages(useMemo(() => [cast.hero.image, cast.guide.image, ...(cast.rival ? [cast.rival.image] : []), ...(cast.keeper ? [cast.keeper.image] : []), ...(cast.people ?? []).map((x) => x.character.image)], [cast]))
 
   const say = useCallback((lines: Line[], onEnd?: () => void) => {
     const usable = lines.filter((l) => l.who !== 'rival' || cast.rival)
@@ -177,6 +177,13 @@ export function SekishoTown({
       out.push({ id: 'guide', kind: 'guide', ch: cast.guide, area: town.start.area, x: town.start.x + 70, y, face: -1 })
       const r = cast.rival ? rivalPlace(town, places, view.cleared) : undefined
       if (r && cast.rival) out.push({ id: 'rival', kind: 'rival', ch: cast.rival, area: r.area, x: r.x, y: y + 4, face: -1 })
+    }
+    // 町の人（名所の建物の、左寄りに立つ）
+    for (const person of cast.people ?? []) {
+      for (const a of town.areas) {
+        const piece = a.row.find((r) => r.spot?.id === person.spot)
+        if (piece) out.push({ id: `person:${person.id}`, kind: 'person', ch: person.character, area: a.id, x: piece.x + Math.min(40, piece.w * 0.22), y: y - 4, face: 1 })
+      }
     }
     return out
   }, [view, complete, cast, town, places])
@@ -311,6 +318,12 @@ export function SekishoTown({
       if (complete && !finaleDone) return startFinale()
       if (complete) return say(labels.afterEnding(storyInfo()), () => setShowMenu(true))
       return say(labels.guideTalk(storyInfo(), talks.current.guide++))
+    }
+    if (t.kind === 'person') {
+      const id = t.id.slice('person:'.length)
+      const n = talks.current[t.id] ?? 0
+      talks.current[t.id] = n + 1
+      return say(labels.personTalk(id, storyInfo(), n))
     }
     say(labels.rivalTalk(storyInfo(), talks.current.rival++))
   }

@@ -70,7 +70,7 @@ export function Dialog({
     first.current = advance
   }, [advance])
   if (!line) return null
-  const ch = line.who === 'hero' ? cast.hero : line.who === 'guide' ? cast.guide : line.who === 'rival' ? cast.rival : line.who === 'keeper' ? cast.keeper : undefined
+  const ch = line.who === 'hero' ? cast.hero : line.who === 'guide' ? cast.guide : line.who === 'rival' ? cast.rival : line.who === 'keeper' ? cast.keeper : line.who === 'person' ? cast.people?.find((x) => x.id === line.person)?.character : undefined
   const name = line.who === 'keeper' ? labels.keeper : (ch?.name ?? labels.narration)
   return (
     <button type="button" className="st-dialog" data-who={line.who} onClick={next}>
