@@ -741,6 +741,53 @@ function open(c: Ctx, p: P) {
   blob(c, p.x + p.w * 0.7, BASE_Y - 22, 22, 13, GREEN_D)
 }
 
+// ─── 絵に差し替えたとき ─────────────────────────────────────
+
+/** 横にくり返して並べる絵と、その高さ */
+const ART_TILES: Record<string, number> = { stonewall: 62, wall: 46 }
+
+/**
+ * 絵の建物に付ける看板の場所（絵の幅・高さに対する割合）と形。
+ * h は横書きの板（軒の上にのせる）、v はたて書きの板（柱にかける）、plain は文字だけ（絵に看板の板があるとき）
+ */
+const ART_SIGNS: Record<string, { x: number; y: number; kind: 'h' | 'v' | 'plain'; size?: number }> = {
+  shop: { x: 0.5, y: 0.455, kind: 'h' },
+  inn: { x: 0.5, y: 0.41, kind: 'h' },
+  theater: { x: 0.5, y: 0.415, kind: 'plain', size: 13 },
+  tea: { x: 0.118, y: 0.6, kind: 'v' },
+  dojo: { x: 0.322, y: 0.66, kind: 'v' },
+}
+
+/** 絵の建物に、看板を描き足す（店の名前）。絵の線・色に合わせて、太めの線と木の色で描く */
+function artSign(c: Ctx, p: P, h: number) {
+  const spot = ART_SIGNS[p.kind]
+  const chars = [...(p.sign ?? '')]
+  if (!spot || !chars.length) return
+  const x = p.x + p.w * spot.x
+  const y = BASE_Y - h + h * spot.y
+  const size = spot.size ?? 12
+  if (spot.kind === 'plain') return text(c, p.sign!, x, y, size, '#3b2415')
+  const long = chars.length * size * 1.08 + 10
+  const short = size + 9
+  const w = spot.kind === 'h' ? long : short
+  const hh = spot.kind === 'h' ? short : long
+  c.save()
+  c.lineJoin = 'round'
+  // 板（ふち・面・上の明るい線）
+  c.fillStyle = '#3b2415'
+  c.beginPath()
+  c.roundRect(x - w / 2 - 1.5, y - hh / 2 - 1.5, w + 3, hh + 3, 2.5)
+  c.fill()
+  c.fillStyle = '#b8742c'
+  c.fillRect(x - w / 2, y - hh / 2, w, hh)
+  c.fillStyle = '#f3e3bd'
+  c.fillRect(x - w / 2 + 2.5, y - hh / 2 + 2.5, w - 5, hh - 5)
+  c.fillStyle = 'rgba(255,255,255,0.5)'
+  c.fillRect(x - w / 2 + 2.5, y - hh / 2 + 2.5, w - 5, 1.2)
+  text(c, p.sign!, x, y + 0.5, size, '#3b2415', spot.kind === 'v')
+  c.restore()
+}
+
 // ─── 景色（空・遠く・地面） ─────────────────────────────────────
 
 const SCENES = {
@@ -827,10 +874,25 @@ export function drawBackdrop(
   for (const p of area.row) {
     const img = art?.images.get(p.kind === 'castlegate' && state.gateOpen && art.images.has('castlegate-open') ? 'castlegate-open' : p.kind)
     if (img) {
+      // 川の景色では、絵の後ろに川を描く
+      if (area.scene === 'river') river(c, p)
+      c.imageSmoothingEnabled = !art?.pixelated
+      const tile = ART_TILES[p.kind]
+      if (tile) {
+        // くり返す絵（石垣など）: 高さを決めて、横に並べる
+        const w = (tile * img.width) / img.height
+        c.save()
+        c.beginPath()
+        c.rect(p.x, BASE_Y - tile, p.w, tile)
+        c.clip()
+        for (let x = p.x; x < p.x + p.w; x += w - 0.5) c.drawImage(img, x, BASE_Y - tile, w, tile)
+        c.restore()
+        continue
+      }
       // 絵は、幅を部品の幅に合わせ、足もとを建物の足もとにそろえる
       const h = (p.w * img.height) / img.width
-      c.imageSmoothingEnabled = !art?.pixelated
       c.drawImage(img, p.x, BASE_Y - h, p.w, h)
+      if (p.sign) artSign(c, p, h)
       continue
     }
     c.save()

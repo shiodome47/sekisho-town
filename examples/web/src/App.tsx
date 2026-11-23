@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { applyChanges, report, type Changes, type CheckItem, type Course, type SekishoData, type TargetAdapter, type TargetRef } from '@shiodome47/sekisho'
-import { JOKAMACHI, SekishoTown, defineArea, type Town, type TownSave } from '@shiodome47/sekisho-town'
-import houseArt from '../../../art/town/house.webp'
-import innArt from '../../../art/town/inn.webp'
-import noticeArt from '../../../art/town/notice.webp'
-import shopArt from '../../../art/town/shop.webp'
-import towerArt from '../../../art/town/tower.webp'
+import { JOKAMACHI, SekishoTown, artTown, type TownSave } from '@shiodome47/sekisho-town'
 import { DEFAULT_CAST } from '@shiodome47/sekisho-town/cast'
 
 /**
@@ -64,35 +59,14 @@ const COURSES: Course[] = [
 ]
 
 /**
- * 絵のためし（?art=1）: 本町通りの 5 種類（店・旅籠・長屋・高札場・火の見やぐら）を、絵に差し替える。
- * 絵は形から描いたものより大きく置くので、本町通りだけ、部品の幅を広げた町にしている
+ * 建物の絵（art/town/）。絵のある種類だけが絵になり、ほかは形から描く。
+ * 絵は大きく置くので、町の部品の幅を絵に合わせる（artTown）。?plain=1 で、形から描いた町
  */
-const ART = new URLSearchParams(location.search).has('art')
-const ART_PIECES = { pieces: { shop: shopArt, inn: innArt, house: houseArt, notice: noticeArt, tower: towerArt } }
-const ART_TOWN: Town = {
-  ...JOKAMACHI,
-  areas: JOKAMACHI.areas.map((a) =>
-    a.id !== 'honmachi'
-      ? a
-      : defineArea({
-          id: a.id,
-          name: a.name,
-          row: [
-            { kind: 'inn', w: 300, spot: { id: 'hatago', name: '旅籠' } },
-            { kind: 'shop', w: 210, spot: { id: 'gofuku', name: '呉服屋' } },
-            { kind: 'alley', w: 52, exit: 'n' },
-            { kind: 'shop', w: 210 },
-            { kind: 'notice', w: 112, spot: { id: 'kosatsu', name: '高札場' } },
-            { kind: 'shop', w: 210 },
-            { kind: 'tower', w: 84, spot: { id: 'hinomi', name: '火の見やぐら' } },
-            { kind: 'shop', w: 210 },
-            { kind: 'house', w: 330 },
-          ],
-          exits: a.exits.map((e) => (e.side === 'down' ? { ...e, x: 1150 } : { id: e.id, side: e.side, to: e.to, at: e.at, lock: e.lock })),
-          map: a.map,
-        }),
-  ),
-}
+const art = import.meta.glob('../../../art/town/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const PIECES = Object.fromEntries(Object.entries(art).map(([path, url]) => [path.split('/').pop()!.replace('.webp', ''), url]))
+const PLAIN = new URLSearchParams(location.search).has('plain')
+const ART_PIECES = { pieces: PIECES }
+const ART_TOWN = artTown(JOKAMACHI, Object.keys(PIECES))
 
 const KEY = 'sekisho-town-demo-v1'
 function load(): { data: SekishoData; save: TownSave } {
@@ -180,8 +154,8 @@ export function App() {
           data={state.data}
           onChange={onChange}
           cast={DEFAULT_CAST}
-          town={ART ? ART_TOWN : undefined}
-          art={ART ? ART_PIECES : undefined}
+          town={PLAIN ? undefined : ART_TOWN}
+          art={PLAIN ? undefined : ART_PIECES}
           targets={targets}
           save={state.save}
           onSave={(save) => setState((s) => ({ ...s, save }))}

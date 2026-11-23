@@ -102,13 +102,24 @@ python3 scripts/make_sprites.py                                 # どの番号�
 町の絵は、3 つのやり方で変えられます。小さく直すほうから:
 
 1. **色・形を直す**: `src/ui/draw.ts`。建物・木などの種類ごとに、関数が 1 つずつあります（`shop`・`inn`・`kura`・`sanmon`・`tenshu` など）。空・地面の色は `SCENES`
-2. **絵（画像）に差し替える**: `art` に、種類 → 絵の URL を書くと、その種類だけが絵になります（ほかは、形から描いたまま）。ドット絵なら `pixelated: true`
+2. **絵（画像）に差し替える**: `art` に、種類 → 絵の URL を書くと、その種類だけが絵になります（ほかは、形から描いたまま）。
+   部品には、キャラに合わせた建物の絵が入っています（`@shiodome47/sekisho-town/art/<種類>.webp`。いまは shop・inn・house・notice・tower・kura・pine・tea・theater・dojo）。
+   絵は大きく置くので、`artTown` で町の部品の幅を絵に合わせます
 
    ```tsx
-   <SekishoTown art={{ pieces: { shop: '/town/shop.png', inn: '/town/inn.png' }, pixelated: true }} … />
+   import { JOKAMACHI, SekishoTown, artTown } from '@shiodome47/sekisho-town'
+   import shop from '@shiodome47/sekisho-town/art/shop.webp' // Vite などが、絵の URL にする
+   import inn from '@shiodome47/sekisho-town/art/inn.webp'
+
+   const pieces = { shop, inn }
+   const town = artTown(JOKAMACHI, Object.keys(pieces))
+   <SekishoTown town={town} art={{ pieces }} … />
    ```
 
-   絵は、幅を部品の幅に合わせ、足もとをそろえて置きます（背景は透明に）。城の門が開いた絵は `castlegate-open`
+   - 絵は、幅を部品の幅に合わせ、足もとをそろえて置きます（背景は透明に）。城の門が開いた絵は `castlegate-open`
+   - 店の名前（`sign`）は、絵の上に看板として描き足します（場所は `src/ui/draw.ts` の `ART_SIGNS`）
+   - 石垣など、横にくり返す絵は `ART_TILES`。ドット絵なら `pixelated: true`
+   - 絵を足すとき: 白い背景・真正面・影なしの絵を `art/town/sheets/<種類>.webp` に置き、`scripts/make_town_art.py` の `ART` に足して `python3 scripts/make_town_art.py`。幅は `src/ui/art.ts` の `ART_WIDTHS`
 3. **町の並びを変える**: 下の「町を変える」
 
 ### 町を変える

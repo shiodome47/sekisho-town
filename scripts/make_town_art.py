@@ -22,6 +22,11 @@ ART = {
     'house': {},
     'notice': {},
     'tower': {'holes': True},
+    'kura': {},
+    'pine': {'holes': True},
+    'tea': {'door': True},
+    'theater': {'door': True},
+    'dojo': {},
 }
 
 

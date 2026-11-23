@@ -94,3 +94,40 @@ export function routeBetween(town: Town, from: string, to: string): string[] | n
 export function allSpots(town: Town): { area: string; id: string; name: string; x: number }[] {
   return town.areas.flatMap((a) => a.spots.map((s) => ({ area: a.id, ...s })))
 }
+
+/**
+ * 部品の幅を変えた町を作る（建物を絵に差し替えるとき、絵の大きさに合わせる）。
+ * widths は、種類（Piece.kind）→ 新しい幅。書いていない種類は、そのまま。
+ * 名所・奥への出口の位置は、部品と一緒に動く。手前への出口・はじまりの場所は、もとの場所の部品の中の、同じ割合の位置へ動かす
+ */
+export function resizeTown(town: Town, widths: Record<string, number>): Town {
+  const moved = new Map<string, (x: number) => number>()
+  const areas = town.areas.map((a) => {
+    const row = a.row.map(({ x: _x, ...p }) => ({ ...p, w: widths[p.kind] ?? p.w }))
+    // もとの x → 新しい x
+    const starts: number[] = []
+    let nx = 0
+    for (const p of row) {
+      starts.push(nx)
+      nx += p.w
+    }
+    const map = (x: number) => {
+      const i = Math.max(0, a.row.findIndex((p) => x < p.x + p.w))
+      const old = a.row[i === -1 ? a.row.length - 1 : i]
+      const j = a.row.indexOf(old)
+      return Math.round(starts[j] + ((x - old.x) / old.w) * row[j].w)
+    }
+    moved.set(a.id, map)
+    return defineArea({
+      id: a.id,
+      name: a.name,
+      scene: a.scene,
+      row,
+      exits: a.exits.map(({ x, ...e }) => (e.side === 'down' ? { ...e, x: map(x) } : e)),
+      map: a.map,
+      photo: a.photo,
+    })
+  })
+  const at = (p: { area: string; x: number }) => ({ area: p.area, x: moved.get(p.area)?.(p.x) ?? p.x })
+  return { ...town, start: at(town.start), finale: at(town.finale), areas }
+}
