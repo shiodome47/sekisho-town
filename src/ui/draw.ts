@@ -631,6 +631,9 @@ function tenshu(c: Ctx, p: P) {
 type Img = CanvasImageSource & { width: number; height: number }
 /** 向こう岸の家並みの絵（drawBackdrop が、描く前に入れる） */
 let farBank: Img | undefined
+/** 川の水・川岸の草の絵 */
+let waterImg: Img | undefined
+let reedsImg: Img | undefined
 
 
 function river(c: Ctx, p: P) {
@@ -656,23 +659,43 @@ function river(c: Ctx, p: P) {
   }
   box(c, x, 106, w, 10, '#8f9a62', false)
   // 水
-  box(c, x, 114, w, 46, '#6f9fb4', false)
-  c.strokeStyle = '#a9cbd6'
-  for (let i = 0; i < (w / 22) * 3; i++) {
-    const wx = x + noise(i * 1.7 + x) * w
-    const wy = 120 + noise(i * 3.3 + x) * 36
-    c.beginPath()
-    c.moveTo(wx, wy)
-    c.quadraticCurveTo(wx + 5, wy - 2, wx + 10, wy)
-    c.stroke()
+  if (waterImg) {
+    tile(c, waterImg, x, w, 114, 52)
+  } else {
+    box(c, x, 114, w, 46, '#6f9fb4', false)
+    c.strokeStyle = '#a9cbd6'
+    for (let i = 0; i < (w / 22) * 3; i++) {
+      const wx = x + noise(i * 1.7 + x) * w
+      const wy = 120 + noise(i * 3.3 + x) * 36
+      c.beginPath()
+      c.moveTo(wx, wy)
+      c.quadraticCurveTo(wx + 5, wy - 2, wx + 10, wy)
+      c.stroke()
+    }
   }
   // 手前の岸
-  box(c, x, 158, w, BASE_Y - 158, '#8f9a62', false)
-  box(c, x, 156, w, 3, '#6f7d4c', false)
+  if (reedsImg) {
+    tile(c, reedsImg, x, w, BASE_Y + 1 - 30, 30)
+  } else {
+    box(c, x, 158, w, BASE_Y - 158, '#8f9a62', false)
+    box(c, x, 156, w, 3, '#6f7d4c', false)
+  }
+}
+
+/** 絵を、通りの左のはしから横にくり返して、x〜x+w のところだけ描く（y は上のはし、h は高さ） */
+function tile(c: Ctx, img: Img, x: number, w: number, y: number, h: number) {
+  const tw = (h * img.width) / img.height
+  c.save()
+  c.beginPath()
+  c.rect(x, y, w, h)
+  c.clip()
+  for (let tx = Math.floor(x / tw) * tw; tx < x + w; tx += tw - 0.5) c.drawImage(img, tx, y, tw, h)
+  c.restore()
 }
 
 function bank(c: Ctx, p: P) {
   river(c, p)
+  if (reedsImg) return
   c.strokeStyle = '#5f7a3e'
   c.lineWidth = 1.4
   for (let i = 0; i < p.w / 16; i++) {
@@ -821,7 +844,7 @@ const SCENES = {
 export const groundOf = (area: Area) => SCENES[area.scene].ground
 
 /** 遠くの景色（空・雲・山・城）。画面に 1 回ずつ描く。shift は、横にずれる量（0〜） */
-export function drawSky(c: Ctx, area: Area, viewW: number, shift: number) {
+export function drawSky(c: Ctx, area: Area, viewW: number, shift: number, mountains?: Img) {
   const s = SCENES[area.scene]
   const g = c.createLinearGradient(0, 0, 0, BASE_Y)
   g.addColorStop(0, s.sky[0])
@@ -838,6 +861,13 @@ export function drawSky(c: Ctx, area: Area, viewW: number, shift: number) {
     c.roundRect(x < -130 ? x + viewW + 260 : x, y, w, 5, 2.5)
     c.roundRect((x < -130 ? x + viewW + 260 : x) + 14, y + 6, w * 0.6, 4, 2)
     c.fill()
+  }
+  if (mountains) {
+    // 遠くの山なみの絵（小さな城も入っている）。町より、ゆっくり流れる
+    const h = 46
+    const tw = (h * mountains.width) / mountains.height
+    for (let x = -((shift * 0.2) % tw); x < viewW; x += tw - 0.5) c.drawImage(mountains, x, 122 - h, tw, h)
+    return
   }
   // 遠くの山
   const mx = -((shift * 0.25) % 220)
@@ -879,6 +909,8 @@ export function drawBackdrop(
 ) {
   const s = SCENES[area.scene]
   farBank = art?.images.get('farbank')
+  waterImg = art?.images.get('water')
+  reedsImg = art?.images.get('reeds')
   // 地面
   c.fillStyle = s.ground
   c.fillRect(0, BASE_Y - 2, area.width, VIEW_H - BASE_Y + 2)

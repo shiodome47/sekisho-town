@@ -4,7 +4,16 @@
  * 自分の絵に変えるときは、同じ形（Character）を作って <SekishoTown cast={…} /> に渡す。
  */
 import type { Cast, Character, Frame } from '../ui/cast'
-import { futaFrames, futaImage, goinkyoFrames, goinkyoImage, takemaruFrames, takemaruImage } from './sprites.generated'
+import {
+  banninFrames,
+  banninImage,
+  futaFrames,
+  futaImage,
+  goinkyoFrames,
+  goinkyoImage,
+  takemaruFrames,
+  takemaruImage,
+} from './sprites.generated'
 
 type Raw = { poses: Record<string, readonly number[]>; faces: Record<string, readonly number[]> }
 const frames = (raw: Raw): Pick<Character, 'poses' | 'faces'> => ({
@@ -19,5 +28,8 @@ export const GOINKYO: Character = { name: 'ご隠居', image: goinkyoImage, ...f
 /** 道場の子。ライバル */
 export const TAKEMARU: Character = { name: '竹丸', image: takemaruImage, ...frames(takemaruFrames) }
 
-export const DEFAULT_CAST: Cast = { hero: FUTA, guide: GOINKYO, rival: TAKEMARU }
+/** 関所の番人。関所のわきに立ち、印を押してくれる */
+export const BANNIN: Character = { name: '関所の番人', image: banninImage, ...frames(banninFrames), height: 68 }
+
+export const DEFAULT_CAST: Cast = { hero: FUTA, guide: GOINKYO, rival: TAKEMARU, keeper: BANNIN }
 export type { Cast, Character, Frame } from '../ui/cast'

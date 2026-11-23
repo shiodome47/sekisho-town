@@ -149,7 +149,7 @@ export const JA_LABELS: Labels = {
               : { who: 'rival', face: 'keen', text: `まだ ${s.rest}つも のこってるのか？ ${where(s)}は もう 見たか？` },
           ]
         : [{ who: 'rival', face: 'surprised', text: 'くっ、先を こされたか…。早く お城へ 行けよ！' }],
-  gateLocked: (before) => [{ who: 'keeper', text: `この関所は まだ 開かぬ。先に 「${before}」を こえて まいれ。` }],
+  gateLocked: (before) => [{ who: 'keeper', face: 'keen', text: `この関所は まだ 開かぬ。先に 「${before}」を こえて まいれ。` }],
   afterClear: (s) =>
     s.next
       ? [
@@ -157,7 +157,7 @@ export const JA_LABELS: Labels = {
           { who: 'keeper', text: `つぎは ${where(s)}へ いそげ！` },
         ]
       : [
-          { who: 'keeper', text: 'みごと！ これで 印が ぜんぶ そろった！' },
+          { who: 'keeper', face: 'proud', text: 'みごと！ これで 印が ぜんぶ そろった！' },
           { who: 'keeper', text: 'お城の 大手門が 開いたぞ。いそいで 行って まいれ！' },
         ],
   castleLocked: (s) => [{ who: 'narration', text: `大手門は かたく とじている。印を ぜんぶ あつめると 開くらしい。（あと ${s.rest}つ）` }],

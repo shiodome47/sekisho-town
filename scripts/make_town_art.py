@@ -29,13 +29,14 @@ def unit_widths():
     w['castlegate-open'] = w['castlegate']
     for k in ('gate-open', 'gate-locked', 'gate-cleared'):
         w[k] = 96  # draw.ts の GATE_ART_W
+    w['water'] = 52 * 3  # 川の水（draw.ts の river。高さ 52）
     w['ground'] = 110  # 地面（draw.ts の GROUND_TILE。足もとの帯より少し高い）
     w['signpost'] = w['tatefuda'] = 80  # 道しるべ・立て札（名前の長さで変わる。長いときの大きさ）
     return w
 
 
 # 横にくり返す絵の高さ（draw.ts の ART_TILES）
-TILE_H = {'stonewall': 62, 'wall': 80, 'farbank': 36}
+TILE_H = {'stonewall': 62, 'wall': 80, 'farbank': 36, 'reeds': 30, 'mountains': 46}
 DOOR = (52, 36, 28)
 
 ART = {
@@ -69,6 +70,10 @@ ART = {
     'alley': {},
     'pinewall': {'pinewall': True, 'holes': True},
     'ground': {'raw': True, 'mirror': True},
+    # 川の水は、空や地面のやわらかい色に合わせて、少しうすくする（tint: まぜる色と、その割合）
+    'water': {'raw': True, 'mirror': True, 'tint': ((205, 228, 230), 0.38)},
+    'reeds': {'holes': True, 'mirror': True},
+    'mountains': {'mirror': True},
     'open': {},
     'farbank': {},
     'signpost': {},
@@ -127,6 +132,9 @@ def build(name, opt):
         # はしまで絵が入っているもの（路地）: 切り出さずに、大きさだけ合わせる
         target = round(unit_widths()[name] * PX_PER_UNIT)
         out = im.resize((target, round(im.height * target / im.width)), Image.LANCZOS)
+        if opt.get('tint'):
+            color, k = opt['tint']
+            out = Image.blend(out, Image.new('RGB', out.size, color), k)
         if opt.get('mirror'):
             # 右に、うら返したものをつなぐ（横にくり返しても、つなぎ目が出ない）
             from PIL import ImageOps
@@ -178,6 +186,12 @@ def build(name, opt):
     target = round(units * PX_PER_UNIT)
     if out.width > target:
         out = out.resize((target, round(out.height * target / out.width)), Image.LANCZOS)
+    if opt.get('mirror'):
+        from PIL import ImageOps
+        wide = Image.new('RGBA', (out.width * 2, out.height), (0, 0, 0, 0))
+        wide.paste(out, (0, 0))
+        wide.paste(ImageOps.mirror(out), (out.width, 0))
+        out = wide
     out.save(ROOT / 'art' / 'town' / f'{name}.webp', 'WEBP', quality=80, method=6)
     print(name, out.size, (ROOT / 'art' / 'town' / f'{name}.webp').stat().st_size // 1024, 'KB')
     return out

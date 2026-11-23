@@ -70,8 +70,8 @@ export function Dialog({
     first.current = advance
   }, [advance])
   if (!line) return null
-  const ch = line.who === 'hero' ? cast.hero : line.who === 'guide' ? cast.guide : line.who === 'rival' ? cast.rival : undefined
-  const name = ch?.name ?? (line.who === 'keeper' ? labels.keeper : labels.narration)
+  const ch = line.who === 'hero' ? cast.hero : line.who === 'guide' ? cast.guide : line.who === 'rival' ? cast.rival : line.who === 'keeper' ? cast.keeper : undefined
+  const name = line.who === 'keeper' ? labels.keeper : (ch?.name ?? labels.narration)
   return (
     <button type="button" className="st-dialog" data-who={line.who} onClick={next}>
       {ch ? <Portrait ch={ch} face={line.face} img={images.get(ch.image)} /> : line.who === 'keeper' ? <span className="st-dialog__seal">関</span> : null}
