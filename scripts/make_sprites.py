@@ -22,6 +22,8 @@ CAST = {
         'poses': {'stand': 8, 'walk': 9, 'run': 10, 'jump': 11, 'wave': 13, 'point': 14, 'cheer': 15,
                   'surprised': 16, 'tired': 17, 'ready': 18, 'laugh': 19},
         'faces': {'happy': 4, 'surprised': 5, 'sad': 6, 'keen': 7},
+        # 横から見た、歩く・走る絵（左足が前・右足が前）。別のシートから取る。足音に合わせて、交互に出す
+        'extra': ('futa-move', {'walk1': 0, 'walk2': 1, 'run1': 2, 'run2': 3}),
     },
     'goinkyo': {
         'poses': {'stand': 8, 'walk': 9, 'wave': 10, 'listen': 11, 'point': 12, 'teach': 13, 'bow': 14,
@@ -80,6 +82,14 @@ def build(name, spec):
             k = s if s else FACE_H / im.height
             im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
             items.append((kind, key, im))
+    if 'extra' in spec:
+        sheet, table = spec['extra']
+        _, more = cut(ROOT / 'art' / 'sheets' / f'{sheet}.webp')
+        # はじめの絵（歩く）の高さを、立ちポーズと同じにする。ほかも同じ割合で縮める
+        k = BODY_H / more[next(iter(table.values()))][1].height
+        for key, i in table.items():
+            im = more[i][1]
+            items.append(('poses', key, im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)))
     places, size = pack([im for _, _, im in items])
     atlas = Image.new('RGBA', size, (0, 0, 0, 0))
     frames = {'poses': {}, 'faces': {}}

@@ -138,7 +138,7 @@ export function SekishoTown({
   // ─── ゲームの今（描くたびに変わるものは ref） ───
   const worldRef = useRef<World>({ area: town.start.area, player: newActor(town.start.x) })
   const input = useRef({ keys: new Set<string>(), stick: { x: 0, y: 0 }, act: false, jump: false })
-  const fx = useRef({ t: 0, fade: 0, emote: '', emoteUntil: 0, bang: 0, blockedAt: -9, stepIn: 0 })
+  const fx = useRef({ t: 0, fade: 0, emote: '', emoteUntil: 0, bang: 0, blockedAt: -9, stepIn: 0, stride: 0 })
   const [areaId, setAreaId] = useState(town.start.area)
   const [near, setNear] = useState<{ id: string; kind: string } | null>(null)
   const [dialog, setDialog] = useState<{ lines: Line[]; onEnd?: () => void } | null>(null)
@@ -511,6 +511,7 @@ export function SekishoTown({
           f.stepIn -= dt
           if (f.stepIn <= 0) {
             f.stepIn = world.player.running ? 0.24 : 0.36
+            f.stride++
             L.sound({ name: 'step', run: world.player.running })
           }
         } else f.stepIn = 0
@@ -606,7 +607,7 @@ export function SekishoTown({
         y: p.y,
         draw: () => {
           const bob = p.moving && p.z === 0 && !L.reduced ? Math.abs(Math.sin(f.t * (p.running ? 18 : 10))) * (p.running ? 2.4 : 1.2) : 0
-          drawActor(c, L.images.get(L.cast.hero.image), L.cast.hero, poseFor(L.cast.hero, p, f.t, emote), p.x, p.y, { face: p.face, z: p.z, bob })
+          drawActor(c, L.images.get(L.cast.hero.image), L.cast.hero, poseFor(L.cast.hero, p, f.t, emote, f.stride), p.x, p.y, { face: p.face, z: p.z, bob })
         },
       })
       actors.sort((a, b2) => a.y - b2.y).forEach((a) => a.draw())
