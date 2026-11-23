@@ -43,6 +43,9 @@ ART = {
     'bridge-side': {'holes': True},
     'castlegate-open': {'door': True},
     'wall': {},
+    'gate-open': {'holes': True},
+    'gate-locked': {'holes': True},
+    'gate-cleared': {'holes': True},
     'pier': {'holes': True},
 }
 

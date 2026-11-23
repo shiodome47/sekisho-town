@@ -117,6 +117,7 @@ python3 scripts/make_sprites.py                                 # どの番号�
    ```
 
    - 絵は、幅を部品の幅に合わせ、足もとをそろえて置きます（背景は透明に）。城の門が開いた絵は `castlegate-open`
+   - 関所の絵は `gate-open`・`gate-locked`・`gate-cleared`（番号・のぼりの文字・印は、部品が上から描き足す）
    - 店の名前（`sign`）は、絵の上に看板として描き足します（場所は `src/ui/draw.ts` の `ART_SIGNS`）
    - 石垣など、横にくり返す絵は `ART_TILES`。ドット絵なら `pixelated: true`
    - 絵を足すとき: 白い背景・真正面・影なしの絵を `art/town/sheets/<種類>.webp` に置き、`scripts/make_town_art.py` の `ART` に足して `python3 scripts/make_town_art.py`。幅は `src/ui/art.ts` の `ART_WIDTHS`

@@ -1018,9 +1018,55 @@ export function drawGate(
   c: Ctx,
   x: number,
   state: 'locked' | 'open' | 'cleared',
-  opts: { stamp: string; color: string; t: number; number: number },
+  opts: { stamp: string; color: string; t: number; number: number; img?: CanvasImageSource & { width: number; height: number } },
 ) {
   const y = BAND_TOP + 2
+  if (opts.img) {
+    // 絵の関所（art の gate-open・gate-locked・gate-cleared）。札の番号・のぼりの文字・印は、上から描き足す
+    const w = GATE_ART_W
+    const h = (w * opts.img.height) / opts.img.width
+    const left = x - w / 2
+    const top = y - h
+    c.save()
+    c.fillStyle = 'rgba(40,30,20,0.18)'
+    c.beginPath()
+    c.ellipse(x, y + 1, w * 0.42, 4, 0, 0, Math.PI * 2)
+    c.fill()
+    // 後ろの建物（同じ木の色）にまぎれないよう、明るいふちを付ける
+    c.save()
+    c.shadowColor = 'rgba(255, 248, 225, 0.95)'
+    c.shadowBlur = 14
+    c.drawImage(opts.img, left, top, w, h)
+    c.drawImage(opts.img, left, top, w, h)
+    c.restore()
+    // 札に、番号の紙をはる
+    const label = KANJI_NUM[opts.number] ?? String(opts.number)
+    const lw = Math.max(13, [...label].length * 9 + 5)
+    c.fillStyle = '#f6ecd4'
+    c.strokeStyle = '#3b2415'
+    c.lineWidth = 0.8
+    c.beginPath()
+    c.rect(x - lw / 2, top + h * 0.432 - 5.5, lw, 11)
+    c.fill()
+    c.stroke()
+    text(c, label, x, top + h * 0.436, 9, '#3b2415')
+    const bx = left + w * 0.928
+    if (state === 'cleared') {
+      text(c, '済', bx, top + h * 0.6, 9, RED)
+      c.fillStyle = 'rgba(246, 236, 212, 0.92)'
+      c.strokeStyle = opts.color
+      c.lineWidth = 1.8
+      c.beginPath()
+      c.arc(x, top + h * 0.72, 11, 0, Math.PI * 2)
+      c.fill()
+      c.stroke()
+      text(c, opts.stamp, x, top + h * 0.725, [...opts.stamp].length > 1 ? 8 : 12, opts.color)
+    } else {
+      text(c, '関所', bx, top + h * 0.6, 8.5, state === 'locked' ? '#4a4a4a' : '#fff3d6', true)
+    }
+    c.restore()
+    return
+  }
   c.save()
   c.fillStyle = 'rgba(40,30,20,0.18)'
   c.beginPath()
@@ -1068,5 +1114,8 @@ export function drawGate(
   }
   c.restore()
 }
+
+/** 絵の関所の幅（高さは、絵の形から決まる。キャラの 1.5 倍くらい） */
+export const GATE_ART_W = 96
 
 export const KANJI_NUM = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十']
