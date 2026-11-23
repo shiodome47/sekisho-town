@@ -67,6 +67,15 @@ describe('部品の幅を変える', () => {
 })
 
 describe('関所を置く', () => {
+  it('関所は、名所の右のはし寄りに立つ（まん中の看板をかくさない）', () => {
+    const big = resizeTown(JOKAMACHI, { shop: 210 })
+    const c = course(1)
+    const p = placeGates(big, c, 1, { [c.gates[0].id]: 'gofuku' })[0]
+    const shop = areaOf(big, 'honmachi').row.find((r) => r.spot?.id === 'gofuku')!
+    expect(p.x).toBe(shop.x + shop.w - 30)
+    // 門の左のはし（幅 96）が、まん中の看板（幅 40 ほど）より右
+    expect(p.x - 48).toBeGreaterThan(shop.x + shop.w / 2 + 20)
+  })
   it('同じコース・同じ周なら同じ場所、周が変わると変わる', () => {
     const c = course(6)
     const a = placeGates(JOKAMACHI, c, 1)
