@@ -422,7 +422,7 @@ export function SekishoTown({
         drawBackdrop(bc, area, { gateOpen }, live.current.pieceArt)
         for (const e of area.exits) {
           const to = live.current.town.areas.find((a) => a.id === e.to)
-          drawExitSign(bc, area, e, to?.name ?? '', !!e.lock && !gateOpen)
+          drawExitSign(bc, area, e, to?.name ?? '', !!e.lock && !gateOpen, live.current.pieceArt.images)
         }
         backdrops.current.set(key, b)
       }

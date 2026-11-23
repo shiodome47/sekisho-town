@@ -29,6 +29,9 @@ export const ART_WIDTHS: Record<string, number> = {
   jizo: 46,
   bridge: 120,
   pier: 260,
+  alley: 150,
+  pinewall: 281, // 石垣の高さが、となりの石垣（62）と同じになる幅
+  open: 120,
 }
 
 /**

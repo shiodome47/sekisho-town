@@ -29,11 +29,13 @@ def unit_widths():
     w['castlegate-open'] = w['castlegate']
     for k in ('gate-open', 'gate-locked', 'gate-cleared'):
         w[k] = 96  # draw.ts の GATE_ART_W
+    w['ground'] = 110  # 地面（draw.ts の GROUND_TILE。足もとの帯より少し高い）
+    w['signpost'] = w['tatefuda'] = 80  # 道しるべ・立て札（名前の長さで変わる。長いときの大きさ）
     return w
 
 
 # 横にくり返す絵の高さ（draw.ts の ART_TILES）
-TILE_H = {'stonewall': 62, 'wall': 80}
+TILE_H = {'stonewall': 62, 'wall': 80, 'farbank': 36}
 DOOR = (52, 36, 28)
 
 ART = {
@@ -52,7 +54,8 @@ ART = {
     'well': {'holes': True},
     'ginkgo': {'holes': True},
     'bell': {'holes': True},
-    'stonewall': {},
+    # 石垣は、石垣の上の松（pinewall）の絵の、石垣のところから作る（石の大きさをそろえる）。前の絵は sheets/stonewall.webp
+    'stonewall': {'wall_of': 'pinewall'},
     'kido': {'holes': True},
     'kido-closed': {'holes': True},
     'castlegate': {},
@@ -63,6 +66,13 @@ ART = {
     'bridge-side': {'holes': True},
     'castlegate-open': {'door': True},
     'wall': {},
+    'alley': {},
+    'pinewall': {'pinewall': True, 'holes': True},
+    'ground': {'raw': True, 'mirror': True},
+    'open': {},
+    'farbank': {},
+    'signpost': {},
+    'tatefuda': {},
     'gate-open': {'holes': True},
     'gate-locked': {'holes': True},
     'gate-cleared': {'holes': True},
@@ -70,8 +80,63 @@ ART = {
 }
 
 
+def wall_top(im):
+    """石垣の上のはし: 上から見て、はじめて「左のはしまで絵がある」行"""
+    a = np.asarray(im).astype(np.int16)
+    white = (a.min(axis=2) > 232) & ((a.max(axis=2) - a.min(axis=2)) < 18)
+    return int(np.argmax(~white[:, :6].all(axis=1)))
+
+
+def shrink_tree(im, k=0.82):
+    """石垣の上の松: 松だけを小さくして、石垣にのせ直す（石垣を、となりの石垣と同じ高さにすると、松が画面から出るので）"""
+    top = wall_top(im)
+    tree = im.crop((0, 0, im.width, top + 6))
+    wall = im.crop((0, top, im.width, im.height))
+    small = tree.resize((round(tree.width * k), round(tree.height * k)), Image.LANCZOS)
+    out = Image.new('RGB', (im.width, small.height + wall.height - 4), (255, 255, 255))
+    out.paste(small, ((im.width - small.width) // 2, 0))
+    out.paste(wall, (0, small.height - 4))
+    return out
+
+
 def build(name, opt):
-    im = Image.open(ROOT / 'art' / 'town' / 'sheets' / f'{name}.webp').convert('RGB')
+    im = Image.open(ROOT / 'art' / 'town' / 'sheets' / f'{name}.webp').convert('RGBA')
+    # はじめから背景が透明な絵は、白い背景にのせてから切り出す
+    white = Image.new('RGBA', im.size, (255, 255, 255, 255))
+    white.alpha_composite(im)
+    im = white.convert('RGB')
+    if opt.get('pinewall'):
+        im = shrink_tree(im)
+    if opt.get('wall_of'):
+        src = Image.open(ROOT / 'art' / 'town' / 'sheets' / f"{opt['wall_of']}.webp").convert('RGBA')
+        white = Image.new('RGBA', src.size, (255, 255, 255, 255))
+        white.alpha_composite(src)
+        src = white.convert('RGB')
+        wall = src.crop((0, wall_top(src), src.width, src.height))
+        # 右に、うら返したものをつなぐ（横にくり返しても、石がとちゅうで切れない）
+        from PIL import ImageOps
+        target_h = round(TILE_H[name] * PX_PER_UNIT)
+        wall = wall.resize((round(wall.width * target_h / wall.height), target_h), Image.LANCZOS)
+        out = Image.new('RGB', (wall.width * 2, wall.height))
+        out.paste(wall, (0, 0))
+        out.paste(ImageOps.mirror(wall), (wall.width, 0))
+        out.save(ROOT / 'art' / 'town' / f'{name}.webp', 'WEBP', quality=80, method=6)
+        print(name, out.size)
+        return out
+    if opt.get('raw'):
+        # はしまで絵が入っているもの（路地）: 切り出さずに、大きさだけ合わせる
+        target = round(unit_widths()[name] * PX_PER_UNIT)
+        out = im.resize((target, round(im.height * target / im.width)), Image.LANCZOS)
+        if opt.get('mirror'):
+            # 右に、うら返したものをつなぐ（横にくり返しても、つなぎ目が出ない）
+            from PIL import ImageOps
+            wide = Image.new('RGB', (out.width * 2, out.height))
+            wide.paste(out, (0, 0))
+            wide.paste(ImageOps.mirror(out), (out.width, 0))
+            out = wide
+        out.save(ROOT / 'art' / 'town' / f'{name}.webp', 'WEBP', quality=80, method=6)
+        print(name, out.size)
+        return out
     a = np.asarray(im).astype(np.int16)
     mx, mn = a.max(axis=2), a.min(axis=2)
     pale = (mn > 232) & ((mx - mn) < 18)
