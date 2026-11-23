@@ -37,6 +37,10 @@ ART = {
     'kido-closed': {'holes': True},
     'castlegate': {},
     'toro': {},
+    'tenshu': {},
+    'jizo': {},
+    'bridge': {'holes': True},
+    'pier': {'holes': True},
 }
 
 
