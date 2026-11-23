@@ -70,7 +70,8 @@ ART = {
     'alley': {},
     'pinewall': {'pinewall': True, 'holes': True},
     'ground': {'raw': True, 'mirror': True},
-    'water': {'raw': True, 'mirror': True},
+    # 川の水は、空や地面のやわらかい色に合わせて、少しうすくする（tint: まぜる色と、その割合）
+    'water': {'raw': True, 'mirror': True, 'tint': ((205, 228, 230), 0.38)},
     'reeds': {'holes': True, 'mirror': True},
     'mountains': {'mirror': True},
     'open': {},
@@ -131,6 +132,9 @@ def build(name, opt):
         # はしまで絵が入っているもの（路地）: 切り出さずに、大きさだけ合わせる
         target = round(unit_widths()[name] * PX_PER_UNIT)
         out = im.resize((target, round(im.height * target / im.width)), Image.LANCZOS)
+        if opt.get('tint'):
+            color, k = opt['tint']
+            out = Image.blend(out, Image.new('RGB', out.size, color), k)
         if opt.get('mirror'):
             # 右に、うら返したものをつなぐ（横にくり返しても、つなぎ目が出ない）
             from PIL import ImageOps
