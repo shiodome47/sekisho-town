@@ -28,6 +28,10 @@ CAST = {
                   'surprised': 15, 'think': 16, 'smile': 17, 'laugh': 18},
         'faces': {'happy': 4, 'surprised': 5, 'sad': 6, 'keen': 7},
     },
+    'bannin': {
+        'poses': {'stand': 4, 'point': 5, 'nod': 6, 'stamp': 7, 'bow': 8, 'laugh': 9},
+        'faces': {'happy': 0, 'surprised': 1, 'keen': 2, 'proud': 3},
+    },
     'takemaru': {
         'poses': {'stand': 8, 'walk': 9, 'run': 10, 'jump': 11, 'bow': 12, 'point': 13, 'ready': 14,
                   'cheer': 15, 'surprised': 16, 'tired': 17, 'laugh': 19},

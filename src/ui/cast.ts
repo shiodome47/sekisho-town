@@ -27,6 +27,8 @@ export interface Cast {
   guide: Character
   /** ライバル（町を走り回っていて、関所の場所を教えてくれる）。無くてもよい */
   rival?: Character
+  /** 関所の番人（関所のわきに立ち、関所での話に顔が出る）。無ければ、話には「関」の印だけ */
+  keeper?: Character
 }
 
 export const poseOf = (ch: Character, pose: string): Frame => ch.poses[pose] ?? ch.poses.stand

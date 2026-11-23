@@ -142,7 +142,7 @@ export function SekishoTown({
   const [toast, setToast] = useState<{ text: string; key: number } | null>(null)
   const talks = useRef({ guide: 0, rival: 0 })
 
-  const images = useImages(useMemo(() => [cast.hero.image, cast.guide.image, ...(cast.rival ? [cast.rival.image] : [])], [cast]))
+  const images = useImages(useMemo(() => [cast.hero.image, cast.guide.image, ...(cast.rival ? [cast.rival.image] : []), ...(cast.keeper ? [cast.keeper.image] : [])], [cast]))
 
   const say = useCallback((lines: Line[], onEnd?: () => void) => {
     const usable = lines.filter((l) => l.who !== 'rival' || cast.rival)
@@ -492,7 +492,7 @@ export function SekishoTown({
       const camX = area.width <= size.viewW ? (area.width - size.viewW) / 2 : Math.min(area.width - size.viewW, Math.max(0, p.x - size.viewW / 2))
       c.setTransform(size.k, 0, 0, size.k, 0, 0)
       c.clearRect(0, 0, size.viewW, VIEW_H)
-      drawSky(c, area, size.viewW, camX)
+      drawSky(c, area, size.viewW, camX, L.pieceArt.images.get('mountains'))
       const b = backdropOf(area, L.complete)
       const bk = b.width / area.width
       c.drawImage(b, Math.max(0, camX) * bk, 0, Math.min(size.viewW, area.width) * bk, b.height, Math.max(0, -camX), 0, Math.min(size.viewW, area.width), VIEW_H)
@@ -522,6 +522,21 @@ export function SekishoTown({
             drawActor(c, L.images.get(n.ch.image), n.ch, poseFor(n.ch, { moving: false, running: false, z: 0 }, f.t), n.x, n.y, { face, bob })
           },
         }))
+      // 関所の番人（関所の左わきに立つ）
+      const keeper = L.cast.keeper
+      if (keeper) {
+        const off = L.pieceArt.images.has('gate-open') ? 64 : 46
+        for (const t of things) {
+          if (t.kind !== 'gate') continue
+          const kx = t.x - off
+          const ky = BAND_TOP + 5
+          const pose = t.gate.view.cleared ? 'nod' : 'stand'
+          actors.push({
+            y: ky,
+            draw: () => drawActor(c, L.images.get(keeper.image), keeper, poseFor(keeper, { moving: false, running: false, z: 0 }, f.t, pose), kx, ky, { face: p.x < kx ? -1 : 1 }),
+          })
+        }
+      }
       actors.push({
         y: p.y,
         draw: () => {
