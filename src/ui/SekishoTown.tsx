@@ -55,7 +55,7 @@ export interface SekishoTownProps {
   onSave?: (save: TownSave) => void
   /**
    * 建物・木などを、絵（画像）に差し替える。pieces は、種類（Piece.kind。'shop'・'inn'・'kura' など）→ 絵の URL。
-   * 書いた種類だけが絵になり、ほかは部品が形から描く。城の門が開いた絵は 'castlegate-open'。
+   * 書いた種類だけが絵になり、ほかは部品が形から描く。城の門が開いた絵は 'castlegate-open'、半分開いた絵は 'castlegate-half'。
    * 関所の絵は 'gate-open'（開いている）・'gate-locked'（まだ開かない）・'gate-cleared'（こえた）。
    * pixelated を true にすると、ドット絵をぼかさずに大きくする
    */
@@ -138,7 +138,7 @@ export function SekishoTown({
   // ─── ゲームの今（描くたびに変わるものは ref） ───
   const worldRef = useRef<World>({ area: town.start.area, player: newActor(town.start.x) })
   const input = useRef({ keys: new Set<string>(), stick: { x: 0, y: 0 }, act: false, jump: false })
-  const fx = useRef({ t: 0, fade: 0, emote: '', emoteUntil: 0, bang: 0, blockedAt: -9, stepIn: 0, stride: 0 })
+  const fx = useRef({ t: 0, fade: 0, emote: '', emoteUntil: 0, bang: 0, blockedAt: -9, stepIn: 0, stride: 0, gateAt: -1 })
   const [areaId, setAreaId] = useState(town.start.area)
   const [near, setNear] = useState<{ id: string; kind: string } | null>(null)
   const [dialog, setDialog] = useState<{ lines: Line[]; onEnd?: () => void } | null>(null)
@@ -421,8 +421,8 @@ export function SekishoTown({
     }
     return { images, pixelated: art?.pixelated }
   }, [art, artImages])
-  const live = useRef({ sound, soundEnter, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale, reduced: false })
-  live.current = { ...live.current, sound, soundEnter, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale }
+  const live = useRef({ addFlag, sound, soundEnter, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale, reduced: false })
+  live.current = { ...live.current, addFlag, sound, soundEnter, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale }
 
   useEffect(() => {
     const m = window.matchMedia?.('(prefers-reduced-motion: reduce)')
@@ -461,8 +461,9 @@ export function SekishoTown({
     ro.observe(root)
     fit()
 
-    const backdropOf = (area: Area, gateOpen: boolean) => {
-      const key = `${area.id}|${gateOpen}`
+    const backdropOf = (area: Area, gate: 0 | 1 | 2) => {
+      const gateOpen = gate === 2
+      const key = `${area.id}|${gate}`
       let b = backdrops.current.get(key)
       if (!b) {
         b = document.createElement('canvas')
@@ -472,7 +473,7 @@ export function SekishoTown({
         b.height = Math.ceil(VIEW_H * k)
         const bc = b.getContext('2d')!
         bc.scale(k, k)
-        drawBackdrop(bc, area, { gateOpen }, live.current.pieceArt)
+        drawBackdrop(bc, area, { gateOpen, gate }, live.current.pieceArt)
         for (const e of area.exits) {
           const to = live.current.town.areas.find((a) => a.id === e.to)
           drawExitSign(bc, area, e, to?.name ?? '', !!e.lock && !gateOpen, live.current.pieceArt.images)
@@ -559,7 +560,26 @@ export function SekishoTown({
       c.setTransform(size.k, 0, 0, size.k, 0, 0)
       c.clearRect(0, 0, size.viewW, VIEW_H)
       drawSky(c, area, size.viewW, camX, L.pieceArt.images.get('mountains'))
-      const b = backdropOf(area, L.complete)
+      // 城の門: 印が全部そろったあと、はじめて門の前に来たとき（話や演出が終わってから）、閉 → 半分 → 開、と開く
+      let gate: 0 | 1 | 2 = L.complete ? 2 : 0
+      if (L.complete && L.course && area.exits.some((e) => e.lock === 'finale')) {
+        const key = flagKey(L.course.id, L.lap, 'gate')
+        if (f.gateAt < 0 && !saveRef.current.flags?.includes(key)) {
+          gate = 0
+          // 通りに入ったときの暗転が明けて、話や演出も終わってから、開きはじめる
+          if (!busyRef.current && f.fade <= 0) {
+            f.gateAt = f.t
+            L.addFlag('gate')
+            L.sound({ name: 'gateopen' })
+          }
+        }
+        if (f.gateAt >= 0) {
+          const dt2 = f.t - f.gateAt
+          gate = L.reduced || dt2 > 1.1 ? 2 : dt2 > 0.45 ? 1 : 0
+          if (gate === 2) f.gateAt = -1
+        }
+      }
+      const b = backdropOf(area, gate)
       const bk = b.width / area.width
       c.drawImage(b, Math.max(0, camX) * bk, 0, Math.min(size.viewW, area.width) * bk, b.height, Math.max(0, -camX), 0, Math.min(size.viewW, area.width), VIEW_H)
       if (camX < 0) {

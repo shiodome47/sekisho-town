@@ -10,6 +10,7 @@
  * - talk: 話を 1 つ進めた（文字送り）
  * - found: 関所を見つけた　- gate: 関所の板を開いた　- locked: 開かない関所・門
  * - check: 項目が 1 つ進んだ　- clear: 関所をこえた（印）　- complete: 印が全部そろった（城の門が開く）
+ * - gateopen: 城の門が、開きはじめた（印が全部そろったあと、門の前に来たとき。1 周に 1 回）
  * - finale: 城で、ご褒美が始まる
  * - enter: 通りに入った（area・scene。曲や町の音を切りかえるのに使う。ゲームを始めたときにも来る）
  * - pause・resume: 止めた・また動かした（アプリが上に練習の画面を出している間など）
@@ -25,6 +26,7 @@ export type SoundName =
   | 'check'
   | 'clear'
   | 'complete'
+  | 'gateopen'
   | 'finale'
   | 'enter'
   | 'pause'

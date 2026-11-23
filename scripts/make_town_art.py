@@ -26,7 +26,7 @@ def unit_widths():
     body = text[text.index('ART_WIDTHS') :]
     body = body[: body.index('}')]
     w = {k: int(v) for k, v in re.findall(r"(\w+): (\d+)", body)}
-    w['castlegate-open'] = w['castlegate']
+    w['castlegate-open'] = w['castlegate-half'] = w['castlegate']
     for k in ('gate-open', 'gate-locked', 'gate-cleared'):
         w[k] = 96  # draw.ts の GATE_ART_W
     w['water'] = 52 * 3  # 川の水（draw.ts の river。高さ 52）
@@ -65,7 +65,9 @@ ART = {
     'jizo': {},
     'bridge': {'holes': True},
     'bridge-side': {'holes': True},
-    'castlegate-open': {'door': True},
+    # 開いた門・半分開いた門（扉は、奥へ開く）。門の中は透明にして、城の中の景色を、部品が後ろに描く
+    'castlegate-open': {},
+    'castlegate-half': {},
     'wall': {},
     'alley': {},
     'pinewall': {'pinewall': True, 'holes': True},

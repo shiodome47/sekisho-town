@@ -784,6 +784,46 @@ function open(c: Ctx, p: P) {
 
 // ─── 絵に差し替えたとき ─────────────────────────────────────
 
+/** 開いた城の門の向こうに見える、城の中（明るい空・遠くの天守・奥へ続く道）。h は、門の絵の高さ */
+function courtyard(c: Ctx, p: P, h: number) {
+  const x = p.x + p.w * 0.27
+  const w = p.w * 0.46
+  const y = BASE_Y - h * 0.54
+  const cx = x + w / 2
+  c.save()
+  c.beginPath()
+  c.rect(x, y, w, BASE_Y - y)
+  c.clip()
+  const sky = c.createLinearGradient(0, y, 0, BASE_Y)
+  sky.addColorStop(0, '#bcdbe6')
+  sky.addColorStop(0.7, '#f4ead0')
+  c.fillStyle = sky
+  c.fillRect(x, y, w, BASE_Y - y)
+  // 遠くの天守
+  c.fillStyle = '#9fb3b4'
+  for (const [half, top, tall] of [
+    [15, 0.36, 0.3],
+    [11, 0.24, 0.14],
+    [7, 0.14, 0.12],
+  ]) {
+    const ty = y + (BASE_Y - y) * top
+    c.fillRect(cx - half * 0.7, ty, half * 1.4, (BASE_Y - y) * tall)
+    shape(c, [cx - half, ty, cx + half, ty, cx + half * 0.55, ty - 5, cx - half * 0.55, ty - 5], '#8ea3a6', false)
+  }
+  // 地面と、奥へ続く道
+  const gy = y + (BASE_Y - y) * 0.66
+  c.fillStyle = '#d9c9a4'
+  c.fillRect(x, gy, w, BASE_Y - gy)
+  shape(c, [cx - w * 0.36, BASE_Y, cx + w * 0.36, BASE_Y, cx + w * 0.1, gy, cx - w * 0.1, gy], '#e6d8b6', false)
+  // 門のかげ（上と左右）
+  const shade = c.createLinearGradient(0, y, 0, y + (BASE_Y - y) * 0.4)
+  shade.addColorStop(0, 'rgba(45, 28, 16, 0.55)')
+  shade.addColorStop(1, 'rgba(45, 28, 16, 0)')
+  c.fillStyle = shade
+  c.fillRect(x, y, w, (BASE_Y - y) * 0.4)
+  c.restore()
+}
+
 /** 横にくり返して並べる絵と、その高さ */
 const ART_TILES: Record<string, number> = { stonewall: 62, wall: 80 }
 
@@ -903,7 +943,8 @@ export function drawSky(c: Ctx, area: Area, viewW: number, shift: number, mounta
 export function drawBackdrop(
   c: Ctx,
   area: Area,
-  state: { gateOpen: boolean },
+  /** gateOpen: 城の門が開いているか。gate: 開いていく途中のこま（0 閉じている・1 半分・2 開いた。無ければ gateOpen から決める） */
+  state: { gateOpen: boolean; gate?: 0 | 1 | 2 },
   /** 建物などを、絵（画像）に差し替える。種類（Piece.kind）→ 絵。あるものは、形から描かずに絵を置く */
   art?: { images: Map<string, CanvasImageSource & { width: number; height: number }>; pixelated?: boolean },
 ) {
@@ -938,8 +979,12 @@ export function drawBackdrop(
   c.fillRect(0, BASE_Y - 2, area.width, 5)
 
   for (const p of area.row) {
-    const img = art?.images.get(p.kind === 'castlegate' && state.gateOpen && art.images.has('castlegate-open') ? 'castlegate-open' : p.kind)
+    const gate = p.kind === 'castlegate' ? (state.gate ?? (state.gateOpen ? 2 : 0)) : 0
+    const gateArt = gate === 2 ? 'castlegate-open' : gate === 1 ? (art?.images.has('castlegate-half') ? 'castlegate-half' : 'castlegate-open') : ''
+    const img = art?.images.get(gateArt && art.images.has(gateArt) ? gateArt : p.kind)
     if (img) {
+      // 開いた城の門: 門の中（絵の透明なところ）に、城の中の景色を描く
+      if (gate > 0) courtyard(c, p, (p.w * img.height) / img.width)
       // 川の景色では、絵の後ろに川を描く
       if (area.scene === 'river') river(c, p)
       c.imageSmoothingEnabled = !art?.pixelated
