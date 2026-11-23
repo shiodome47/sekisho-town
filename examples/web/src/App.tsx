@@ -65,6 +65,7 @@ const COURSES: Course[] = [
 const art = import.meta.glob('../../../art/town/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const PIECES = Object.fromEntries(Object.entries(art).map(([path, url]) => [path.split('/').pop()!.replace('.webp', ''), url]))
 const PLAIN = new URLSearchParams(location.search).has('plain')
+const SOUND_LOG = new URLSearchParams(location.search).has('sound')
 const ART_PIECES = { pieces: PIECES }
 const ART_TOWN = artTown(JOKAMACHI, Object.keys(PIECES))
 
@@ -154,6 +155,9 @@ export function App() {
           data={state.data}
           onChange={onChange}
           cast={DEFAULT_CAST}
+          // 音のきっかけの見本（?sound=1 で、コンソールに出す。素材は入れていない）
+          muted={!SOUND_LOG}
+          onSound={SOUND_LOG ? (e) => console.log('sound', e) : undefined}
           town={PLAIN ? undefined : ART_TOWN}
           art={PLAIN ? undefined : ART_PIECES}
           targets={targets}

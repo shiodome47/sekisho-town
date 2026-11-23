@@ -60,6 +60,7 @@ import '@shiodome47/sekisho-town/style.css'
 | `paused` | 止める（アプリが上に練習の画面を出している間） |
 | `onExit` | 渡すと、メニューに「ゲームを出る」が出る |
 | `labels` | 文言・せりふの一部を差し替え |
+| `onSound` | 音のきっかけを知らせる（下の「音」）。`muted={false}` のときだけ呼ぶ |
 | `muted` / `reducedMotion` | 演出に渡す（sekisho と同じ） |
 
 ### 学びの中身とのつなぎ（手話アプリの例）
@@ -84,6 +85,8 @@ save(changes)
 
 `cast` は、主人公（`hero`）・案内役（`guide`）・ライバル（`rival`）・関所の番人（`keeper`）。番人を渡すと、関所の左わきに立ち、関所での話に顔が出ます（渡さなければ、話には「関」の印だけ）。
 
+町の人（`people`）は、名所の前に立っていて、話しかけられます。1 人は `{ id, character, spot }`（`spot` は、立つ名所の id）。せりふは `labels.personTalk(id, s, n)` で決めます（はじめから入っているのは、茶屋の娘・呉服屋の主人・寺の小僧・船頭）。
+
 
 `Character` は、こまを並べた 1 枚の絵（`image`）と、こまの場所（`poses`・`faces`）です。
 
@@ -99,6 +102,40 @@ python3 scripts/make_sprites.py                                 # どの番号�
 ```
 
 （Python と Pillow・numpy・scipy が要ります。）
+
+### 音
+
+部品は、音の素材を持ちません（素材の使ってよい条件は、アプリごとにちがうので）。部品は「いま、こういうことが起きた」を `onSound` で知らせるだけで、鳴らすのはアプリです。
+音は、ふつうは出しません（`muted` の既定は true）。出すときは `muted={false}` と `onSound` を渡します。
+
+かんたんに鳴らすには、`createSoundPlayer` に音の URL を渡して、その `play` を渡します。
+
+```tsx
+import { SekishoTown, createSoundPlayer } from '@shiodome47/sekisho-town'
+
+const player = createSoundPlayer({
+  effects: { step: '/sound/step.mp3', jump: '/sound/jump.mp3', found: '/sound/found.mp3', clear: '/sound/stamp.mp3' },
+  music: { default: '/sound/town.mp3', scenes: { river: '/sound/river.mp3', temple: '/sound/temple.mp3' }, finale: '/sound/finale.mp3' },
+})
+
+<SekishoTown muted={false} onSound={player.play} … />
+```
+
+| きっかけ | いつ |
+|---|---|
+| `step` | 足音（`run` が true なら、走っている） |
+| `jump` | とんだ |
+| `talk` | 話を 1 つ進めた |
+| `found` | 関所を見つけた |
+| `gate` / `locked` | 関所の板を開いた／開かない関所・門 |
+| `check` / `clear` / `complete` | 項目が進んだ／関所をこえた／印が全部そろった |
+| `finale` | 城で、ご褒美が始まる |
+| `enter` | 通りに入った（`area`・`scene`。曲や町の音を切りかえる。始めたときにも来る） |
+| `pause` / `resume` / `leave` | 止めた／また動かした／町を出た |
+
+- 曲（`music`）は、通りに入ったときに `areas`（通りの id）→ `scenes`（景色の種類）→ `default` の順にさがして、くり返して流します
+- ブラウザは、使う人が画面にさわるまで音を出しません。鳴らせなかったときは、何もしません
+- 自分で鳴らしたいとき（Web Audio など）は、`onSound` に自分の関数を渡します
 
 ### 町の絵を変える
 

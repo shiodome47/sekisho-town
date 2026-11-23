@@ -3,10 +3,18 @@
  * 絵は data URL で入っているので、どのアプリでも、そのまま使える。
  * 自分の絵に変えるときは、同じ形（Character）を作って <SekishoTown cast={…} /> に渡す。
  */
-import type { Cast, Character, Frame } from '../ui/cast'
+import type { Cast, Character, Frame, TownPerson } from '../ui/cast'
 import {
   banninFrames,
   banninImage,
+  chayaFrames,
+  chayaImage,
+  gofukuyaFrames,
+  gofukuyaImage,
+  kozoFrames,
+  kozoImage,
+  sendoFrames,
+  sendoImage,
   futaFrames,
   futaImage,
   goinkyoFrames,
@@ -31,5 +39,19 @@ export const TAKEMARU: Character = { name: '竹丸', image: takemaruImage, ...fr
 /** 関所の番人。関所のわきに立ち、印を押してくれる */
 export const BANNIN: Character = { name: '関所の番人', image: banninImage, ...frames(banninFrames), height: 68 }
 
-export const DEFAULT_CAST: Cast = { hero: FUTA, guide: GOINKYO, rival: TAKEMARU, keeper: BANNIN }
-export type { Cast, Character, Frame } from '../ui/cast'
+/** 町の人 */
+export const CHAYA: Character = { name: '茶屋の娘', image: chayaImage, ...frames(chayaFrames), height: 58 }
+export const GOFUKUYA: Character = { name: '呉服屋の主人', image: gofukuyaImage, ...frames(gofukuyaFrames), height: 70 }
+export const KOZO: Character = { name: '寺の小僧', image: kozoImage, ...frames(kozoFrames), height: 50 }
+export const SENDO: Character = { name: '船頭', image: sendoImage, ...frames(sendoFrames), height: 68 }
+
+/** はじめから入っている町の人と、立つ名所（城下町） */
+export const DEFAULT_PEOPLE: TownPerson[] = [
+  { id: 'chaya', character: CHAYA, spot: 'chaya' },
+  { id: 'gofukuya', character: GOFUKUYA, spot: 'gofuku' },
+  { id: 'kozo', character: KOZO, spot: 'sanmon' },
+  { id: 'sendo', character: SENDO, spot: 'funatsuki' },
+]
+
+export const DEFAULT_CAST: Cast = { hero: FUTA, guide: GOINKYO, rival: TAKEMARU, keeper: BANNIN, people: DEFAULT_PEOPLE }
+export type { Cast, Character, Frame, TownPerson } from '../ui/cast'
