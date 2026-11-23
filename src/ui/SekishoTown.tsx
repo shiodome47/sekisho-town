@@ -28,6 +28,7 @@ import type { Cast, Character } from './cast'
 import { FONT, INK, drawBackdrop, drawExitSign, drawGate, drawSky, text } from './draw'
 import { JA_LABELS, type Labels, type Line, type StoryInfo } from './labels'
 import { Dialog, GatePanel, MapView, TouchPad } from './overlays'
+import type { SoundEvent } from './sound'
 import { drawActor, poseFor, useImages } from './sprites'
 
 export interface SekishoTownProps {
@@ -65,7 +66,13 @@ export interface SekishoTownProps {
   onExit?: () => void
   /** 止める（アプリが、上に練習の画面を出しているときなど） */
   paused?: boolean
+  /** 音を出さない。既定は true（音を出すときは、muted={false} と onSound を渡す） */
   muted?: boolean
+  /**
+   * 音のきっかけ（足音・とぶ・関所を見つけた・印・通りに入った など）を知らせる。鳴らすのはアプリ。
+   * createSoundPlayer に音の URL を渡して、その play を渡すと、かんたんに鳴らせる。muted のあいだは呼ばない
+   */
+  onSound?: (event: SoundEvent) => void
   reducedMotion?: boolean
   labels?: Partial<Labels>
   className?: string
@@ -95,6 +102,7 @@ export function SekishoTown({
   onExit,
   paused = false,
   muted = true,
+  onSound,
   reducedMotion,
   labels: labelsPatch,
   className,
@@ -130,7 +138,7 @@ export function SekishoTown({
   // ─── ゲームの今（描くたびに変わるものは ref） ───
   const worldRef = useRef<World>({ area: town.start.area, player: newActor(town.start.x) })
   const input = useRef({ keys: new Set<string>(), stick: { x: 0, y: 0 }, act: false, jump: false })
-  const fx = useRef({ t: 0, fade: 0, emote: '', emoteUntil: 0, bang: 0, blockedAt: -9 })
+  const fx = useRef({ t: 0, fade: 0, emote: '', emoteUntil: 0, bang: 0, blockedAt: -9, stepIn: 0 })
   const [areaId, setAreaId] = useState(town.start.area)
   const [near, setNear] = useState<{ id: string; kind: string } | null>(null)
   const [dialog, setDialog] = useState<{ lines: Line[]; onEnd?: () => void } | null>(null)
@@ -141,6 +149,18 @@ export function SekishoTown({
   const [events, setEvents] = useState<ClearEvent[]>([])
   const [toast, setToast] = useState<{ text: string; key: number } | null>(null)
   const talks = useRef<Record<string, number>>({ guide: 0, rival: 0 })
+
+  // ─── 音（きっかけを知らせるだけ。鳴らすのはアプリ） ───
+  const soundRef = useRef<{ on?: (e: SoundEvent) => void; muted: boolean }>({ on: onSound, muted })
+  soundRef.current = { on: onSound, muted }
+  const sound = useCallback((event: SoundEvent) => {
+    const s = soundRef.current
+    if (!s.muted) s.on?.(event)
+  }, [])
+  const soundEnter = useCallback(
+    (areaId: string) => sound({ name: 'enter', area: areaId, scene: town.areas.find((a) => a.id === areaId)?.scene }),
+    [sound, town],
+  )
 
   const images = useImages(useMemo(() => [cast.hero.image, cast.guide.image, ...(cast.rival ? [cast.rival.image] : []), ...(cast.keeper ? [cast.keeper.image] : []), ...(cast.people ?? []).map((x) => x.character.image)], [cast]))
 
@@ -200,6 +220,7 @@ export function SekishoTown({
       if (!same) updateSave({ courseId: id, area: worldRef.current.area, x: worldRef.current.player.x, y: worldRef.current.player.y })
       fx.current.fade = 1
       setScreen('play')
+      soundEnter(worldRef.current.area)
     },
     [town, updateSave],
   )
@@ -255,6 +276,8 @@ export function SekishoTown({
     const fresh = view.gates.filter((g) => g.cleared && !known.current.ids.has(g.gate.id))
     known.current.ids = now
     if (!fresh.length || screen !== 'play') return
+    sound({ name: 'clear' })
+    if (view.gates.every((g) => g.cleared)) sound({ name: 'complete' })
     let cleared = view.cleared - fresh.length
     lastCleared.current = fresh[fresh.length - 1].gate.id
     setEvents((q) => [
@@ -281,12 +304,24 @@ export function SekishoTown({
   // 城で、ご褒美
   const startFinale = useCallback(() => {
     if (!course || !view) return
+    sound({ name: 'finale' })
     say(labels.finale(storyInfo()), () =>
       setEvents([{ kind: 'course', course, cleared: view.total, total: view.total, at: view.clearedAt ?? new Date().toISOString() }]),
     )
   }, [course, view, labels, say, storyInfo])
 
   // ─── しらべる・はなす ───
+  // 町を出た（はじめの画面に戻った・部品が消えた）・止めた・また動かした
+  useEffect(() => {
+    if (screen !== 'play') return
+    return () => sound({ name: 'leave' })
+  }, [screen, sound])
+  useEffect(() => {
+    if (screen !== 'play' || !paused) return
+    sound({ name: 'pause' })
+    return () => sound({ name: 'resume' })
+  }, [screen, paused, sound])
+
   const busy = paused || screen !== 'play' || !!dialog || !!gateId || showMap || showMenu || events.length > 0
   const busyRef = useRef(busy)
   busyRef.current = busy
@@ -301,7 +336,10 @@ export function SekishoTown({
   )
 
   const act = () => {
-    if (dialog) return setAdvance((n) => n + 1)
+    if (dialog) {
+      sound({ name: 'talk' })
+      return setAdvance((n) => n + 1)
+    }
     if (busyRef.current) return
     const t = nearest(worldRef.current.player, thingsRef.current)
     if (!t) return
@@ -310,8 +348,10 @@ export function SekishoTown({
       const g = t.gate
       if (!g.view.open) {
         const before = gates.find((x) => !x.view.cleared)
+        sound({ name: 'locked' })
         return say(labels.gateLocked(before?.view.gate.title ?? ''))
       }
+      sound({ name: 'gate' })
       return setGateId(g.view.gate.id)
     }
     if (t.kind === 'guide') {
@@ -381,8 +421,8 @@ export function SekishoTown({
     }
     return { images, pixelated: art?.pixelated }
   }, [art, artImages])
-  const live = useRef({ pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale, reduced: false })
-  live.current = { ...live.current, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale }
+  const live = useRef({ sound, soundEnter, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale, reduced: false })
+  live.current = { ...live.current, sound, soundEnter, pieceArt, gates, npcs, complete, finaleDone, course, lap, images, cast, labels, town, startFinale }
 
   useEffect(() => {
     const m = window.matchMedia?.('(prefers-reduced-motion: reduce)')
@@ -463,10 +503,20 @@ export function SekishoTown({
         const y = usingKeys ? ky : stick.y
         // キーは、ふつうは走る（Shift で歩く）。指は、大きくたおすと走る
         const run = usingKeys ? !keys.has('Shift') : Math.hypot(stick.x, stick.y) > 0.72
+        if (inp.jump && world.player.z === 0) L.sound({ name: 'jump' })
         const r = step(L.town, world, { x, y, run, jump: inp.jump }, dt, (e) => e.lock === 'finale' && !L.complete)
         world = r.world
+        // 足音: 歩くときは 0.36 秒ごと、走るときは 0.24 秒ごと
+        if (world.player.moving && world.player.z === 0) {
+          f.stepIn -= dt
+          if (f.stepIn <= 0) {
+            f.stepIn = world.player.running ? 0.24 : 0.36
+            L.sound({ name: 'step', run: world.player.running })
+          }
+        } else f.stepIn = 0
         worldRef.current = world
         if (r.moved) {
+          L.soundEnter(world.area)
           f.fade = 1
           setAreaId(world.area)
           updateSave({ area: world.area, x: Math.round(world.player.x), y: Math.round(world.player.y), face: world.player.face })
@@ -474,6 +524,7 @@ export function SekishoTown({
           if (world.area === L.town.finale.area && L.complete && !L.finaleDone) window.setTimeout(() => live.current.startFinale(), 450)
         } else if (r.blocked && f.t - f.blockedAt > 2.5) {
           f.blockedAt = f.t
+          L.sound({ name: 'locked' })
           world.player.y = BAND_TOP + 3
           const rest = L.gates.filter((g) => !g.view.cleared).length
           setDialog({ lines: L.labels.castleLocked({ hero: '', guide: '', rival: '', rest, total: L.gates.length }) })
@@ -488,6 +539,7 @@ export function SekishoTown({
             f.emote = 'surprised'
             f.emoteUntil = f.t + 0.7
             f.bang = f.t + 0.9
+            L.sound({ name: 'found' })
             setToast({ text: L.labels.found, key: now })
           }
         }
@@ -606,7 +658,10 @@ export function SekishoTown({
     // 演出は、この部品が出す（クリアの記録が増えたのを見て）。events は渡さない
     const { events: _events, ...rest } = changes
     void _events
-    if (Object.keys(rest).length) onChange(rest)
+    if (Object.keys(rest).length) {
+      if (rest.progress?.length) sound({ name: 'check' })
+      onChange(rest)
+    }
   }
 
   const area = areaOf(town, areaId)
