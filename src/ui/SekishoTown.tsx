@@ -55,6 +55,7 @@ export interface SekishoTownProps {
   /**
    * 建物・木などを、絵（画像）に差し替える。pieces は、種類（Piece.kind。'shop'・'inn'・'kura' など）→ 絵の URL。
    * 書いた種類だけが絵になり、ほかは部品が形から描く。城の門が開いた絵は 'castlegate-open'。
+   * 関所の絵は 'gate-open'（開いている）・'gate-locked'（まだ開かない）・'gate-cleared'（こえた）。
    * pixelated を true にすると、ドット絵をぼかさずに大きくする
    */
   art?: { pieces: Record<string, string>; pixelated?: boolean }
@@ -507,7 +508,8 @@ export function SekishoTown({
         if (t.kind !== 'gate') continue
         const g = t.gate
         const s = stampOf(g.view.gate, L.course?.color)
-        drawGate(c, t.x, g.view.cleared ? 'cleared' : g.view.open ? 'open' : 'locked', { stamp: s.text, color: s.color, t: L.reduced ? 0 : f.t, number: g.view.index + 1 })
+        const gs = g.view.cleared ? 'cleared' : g.view.open ? 'open' : 'locked'
+        drawGate(c, t.x, gs, { stamp: s.text, color: s.color, t: L.reduced ? 0 : f.t, number: g.view.index + 1, img: L.pieceArt.images.get(`gate-${gs}`) })
       }
       const emote = f.t < f.emoteUntil ? f.emote : ''
       const actors: { y: number; draw: () => void }[] = things
@@ -534,7 +536,7 @@ export function SekishoTown({
       if (!busyRef.current) {
         const t = nearest(p, things)
         if (t) {
-          const ty = t.kind === 'gate' ? BAND_TOP - 70 : t.y - 76
+          const ty = t.kind === 'gate' ? BAND_TOP - (L.pieceArt.images.has('gate-open') ? 108 : 70) : t.y - 76
           const bounce = L.reduced ? 0 : Math.sin(f.t * 6) * 1.5
           c.fillStyle = '#fffaf0'
           c.strokeStyle = INK

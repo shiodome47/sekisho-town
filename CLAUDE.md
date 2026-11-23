@@ -12,7 +12,8 @@
 
 - `src/core/` は React にも保存先にも頼らない（計算だけ）。関数はデータを書き換えない
 - 進み具合（チェック・クリア・周回）は sekisho のデータ。この部品が持つのは、町の中のこと（`TownSave`）だけ
-- 町の絵は `src/ui/draw.ts` で、形と色から描く（ほかのゲームの絵・名前・キャラクターをまねない）
+- 町の絵は `src/ui/draw.ts` で、形と色から描く。建物の絵（`art/town/`。持ち主が用意したもの）があれば、それに差し替える（`art`）。ほかのゲームの絵・名前・キャラクターをまねない
+- 建物の絵は `art/town/sheets/` の絵から `python3 scripts/make_town_art.py` で作る
 - 登場人物の絵は `art/sheets/` の設定シートから `python3 scripts/make_sprites.py` で作る（`src/cast/sprites.generated.ts` は手で直さない）
 - 見た目は `.sekisho-town` の中だけに効く CSS。文言は `labels` で差し替えられるようにする
 - 説明はやさしい日本語で。個人の情報は書かない

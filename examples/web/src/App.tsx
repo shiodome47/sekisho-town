@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { applyChanges, report, type Changes, type CheckItem, type Course, type SekishoData, type TargetAdapter, type TargetRef } from '@shiodome47/sekisho'
-import { SekishoTown, type TownSave } from '@shiodome47/sekisho-town'
+import { JOKAMACHI, SekishoTown, artTown, type TownSave } from '@shiodome47/sekisho-town'
 import { DEFAULT_CAST } from '@shiodome47/sekisho-town/cast'
 
 /**
@@ -57,6 +57,16 @@ const COURSES: Course[] = [
     ],
   }),
 ]
+
+/**
+ * 建物の絵（art/town/）。絵のある種類だけが絵になり、ほかは形から描く。
+ * 絵は大きく置くので、町の部品の幅を絵に合わせる（artTown）。?plain=1 で、形から描いた町
+ */
+const art = import.meta.glob('../../../art/town/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+const PIECES = Object.fromEntries(Object.entries(art).map(([path, url]) => [path.split('/').pop()!.replace('.webp', ''), url]))
+const PLAIN = new URLSearchParams(location.search).has('plain')
+const ART_PIECES = { pieces: PIECES }
+const ART_TOWN = artTown(JOKAMACHI, Object.keys(PIECES))
 
 const KEY = 'sekisho-town-demo-v1'
 function load(): { data: SekishoData; save: TownSave } {
@@ -144,6 +154,8 @@ export function App() {
           data={state.data}
           onChange={onChange}
           cast={DEFAULT_CAST}
+          town={PLAIN ? undefined : ART_TOWN}
+          art={PLAIN ? undefined : ART_PIECES}
           targets={targets}
           save={state.save}
           onSave={(save) => setState((s) => ({ ...s, save }))}

@@ -11,6 +11,7 @@ import {
   newActor,
   nextGate,
   placeGates,
+  resizeTown,
   rivalPlace,
   routeBetween,
   startWorld,
@@ -38,6 +39,30 @@ describe('城下町', () => {
   })
   it('木戸から城内まで道がある', () => {
     expect(routeBetween(JOKAMACHI, 'kido', 'shiro')).toEqual(['kido', 'honmachi', 'ote', 'shiro'])
+  })
+})
+
+describe('部品の幅を変える', () => {
+  const big = resizeTown(JOKAMACHI, { shop: 210, inn: 300, kido: 190 })
+  it('つながり・名所の数は変わらない', () => {
+    expect(checkTown(big)).toEqual([])
+    expect(allSpots(big)).toHaveLength(20)
+  })
+  it('通りが広がり、名所・出口・はじまりの場所も一緒に動く', () => {
+    const a = areaOf(JOKAMACHI, 'honmachi')
+    const b = areaOf(big, 'honmachi')
+    expect(b.width).toBe(a.width + 100 + 60 * 4)
+    expect(b.spots.find((s) => s.id === 'hatago')!.x).toBe(150)
+    expect(b.exits.find((e) => e.id === 'n')!.x).toBe(a.exits.find((e) => e.id === 'n')!.x + 160)
+    // 手前への出口は、もとと同じ部品（火の見やぐら）の前にある
+    const down = b.exits.find((e) => e.id === 's')!.x
+    const rice = b.row.find((p) => p.kind === 'tower')!
+    expect(down).toBeGreaterThanOrEqual(rice.x)
+    expect(down).toBeLessThanOrEqual(rice.x + rice.w)
+    // はじまりの場所は、木戸の前のまま
+    const kido = areaOf(big, 'kido').row.find((p) => p.kind === 'kido')!
+    expect(big.start.x).toBeGreaterThan(kido.x)
+    expect(big.start.x).toBeLessThan(kido.x + kido.w)
   })
 })
 

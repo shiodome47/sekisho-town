@@ -4,7 +4,7 @@
  */
 export { BAND_BOTTOM, BAND_TOP, BASE_Y, VIEW_H } from './types'
 export type { Actor, Area, Exit, Input, Piece, Placement, Spot, Town, TownSave, World } from './types'
-export { allSpots, areaOf, checkTown, defineArea, routeBetween } from './town'
+export { allSpots, areaOf, checkTown, defineArea, resizeTown, routeBetween } from './town'
 export { JOKAMACHI } from './jokamachi'
 export { placeGates, seededRandom } from './placement'
 export { EXIT_REACH, RUN_SPEED, WALK_SPEED, arriveAt, nearest, newActor, startWorld, step } from './engine'
