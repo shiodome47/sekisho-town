@@ -21,11 +21,21 @@ export function useImages(urls: string[]): Map<string, HTMLImageElement> {
 }
 
 /** 今の動きから、どのこまを出すか */
-export function poseFor(ch: Character, a: { moving: boolean; running: boolean; z: number }, t: number, emote?: string): Frame {
+/**
+ * 今の動きから、どのこまを出すか。
+ * stride は、歩いた・走った歩数（足音が鳴るたびに 1 つ増える）。横から見た絵（walk1・walk2、run1・run2）があれば、
+ * 歩数に合わせて、左足が前・右足が前を交互に出す。無ければ、stand・walk・run を時間で切りかえる
+ */
+export function poseFor(ch: Character, a: { moving: boolean; running: boolean; z: number }, t: number, emote?: string, stride = 0): Frame {
   if (emote) return poseOf(ch, emote)
   if (a.z > 0) return poseOf(ch, 'jump')
   if (!a.moving) return poseOf(ch, 'stand')
-  if (a.running) return poseOf(ch, Math.floor(t * 9) % 2 ? 'walk' : 'run')
+  const side = stride % 2 ? '2' : '1'
+  if (a.running) {
+    if (ch.poses.run1 && ch.poses.run2) return ch.poses[`run${side}`]
+    return poseOf(ch, Math.floor(t * 9) % 2 ? 'walk' : 'run')
+  }
+  if (ch.poses.walk1 && ch.poses.walk2) return ch.poses[`walk${side}`]
   return poseOf(ch, Math.floor(t * 5) % 2 ? 'stand' : 'walk')
 }
 

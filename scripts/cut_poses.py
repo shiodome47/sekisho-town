@@ -14,7 +14,11 @@ from scipy import ndimage
 
 
 def cut(path):
-    im = Image.open(path).convert('RGB')
+    im = Image.open(path).convert('RGBA')
+    # はじめから背景が透明な絵は、白い背景にのせてから切り出す
+    white = Image.new('RGBA', im.size, (255, 255, 255, 255))
+    white.alpha_composite(im)
+    im = white.convert('RGB')
     a = np.asarray(im).astype(np.int16)
     mx, mn = a.max(axis=2), a.min(axis=2)
     # 背景らしい色: 白と、うすい影（明るくて、色みが弱い）
