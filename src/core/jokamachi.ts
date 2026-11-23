@@ -132,12 +132,13 @@ export const JOKAMACHI: Town = {
       name: '大手門前',
       scene: 'castle',
       row: [
+        { kind: 'stonewall', w: 96 },
         { kind: 'toro', w: 80, spot: { id: 'joyato', name: '常夜灯' } },
         { kind: 'alley', w: 52, exit: 'n' },
         { kind: 'stonewall', w: 190 },
         { kind: 'castlegate', w: 230, exit: 'gate' },
         { kind: 'stonewall', w: 190 },
-        { kind: 'pine', w: 100, spot: { id: 'ohori', name: 'お堀ばたの松' } },
+        { kind: 'pinewall', w: 100, spot: { id: 'ohori', name: 'お堀ばたの松' } },
         { kind: 'stonewall', w: 120 },
       ],
       exits: [

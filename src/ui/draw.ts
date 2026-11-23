@@ -990,6 +990,10 @@ export function drawBackdrop(
       case 'stonewall':
         stonewall(c, p)
         break
+      case 'pinewall':
+        stonewall(c, p)
+        pine(c, p)
+        break
       case 'castlegate':
         castlegate(c, p, state.gateOpen)
         break

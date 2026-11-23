@@ -65,7 +65,8 @@ ART = {
     'bridge-side': {'holes': True},
     'castlegate-open': {'door': True},
     'wall': {},
-    'alley': {'raw': True},
+    'alley': {},
+    'pinewall': {'pinewall': True, 'holes': True},
     'ground': {'raw': True, 'mirror': True},
     'open': {},
     'farbank': {},
@@ -78,8 +79,29 @@ ART = {
 }
 
 
+def shrink_tree(im, k=0.82):
+    """石垣の上の松: 松だけを小さくして、石垣にのせ直す（石垣を、となりの石垣と同じ高さにすると、松が画面から出るので）"""
+    a = np.asarray(im).astype(np.int16)
+    white = (a.min(axis=2) > 232) & ((a.max(axis=2) - a.min(axis=2)) < 18)
+    # 石垣の上のはし: 上から見て、はじめて「左のはしまで絵がある」行
+    top = int(np.argmax(~white[:, :6].all(axis=1)))
+    tree = im.crop((0, 0, im.width, top + 6))
+    wall = im.crop((0, top, im.width, im.height))
+    small = tree.resize((round(tree.width * k), round(tree.height * k)), Image.LANCZOS)
+    out = Image.new('RGB', (im.width, small.height + wall.height - 4), (255, 255, 255))
+    out.paste(small, ((im.width - small.width) // 2, 0))
+    out.paste(wall, (0, small.height - 4))
+    return out
+
+
 def build(name, opt):
-    im = Image.open(ROOT / 'art' / 'town' / 'sheets' / f'{name}.webp').convert('RGB')
+    im = Image.open(ROOT / 'art' / 'town' / 'sheets' / f'{name}.webp').convert('RGBA')
+    # はじめから背景が透明な絵は、白い背景にのせてから切り出す
+    white = Image.new('RGBA', im.size, (255, 255, 255, 255))
+    white.alpha_composite(im)
+    im = white.convert('RGB')
+    if opt.get('pinewall'):
+        im = shrink_tree(im)
     if opt.get('raw'):
         # はしまで絵が入っているもの（路地）: 切り出さずに、大きさだけ合わせる
         target = round(unit_widths()[name] * PX_PER_UNIT)
