@@ -1,0 +1,33 @@
+/** 登場人物の絵の形 */
+
+/** 1 こまの場所（絵の中の x・y・幅・高さ） */
+export type Frame = readonly [number, number, number, number]
+
+/** 登場人物 1 人 */
+export interface Character {
+  name: string
+  /** こまを並べた 1 枚の絵の URL（data URL でもよい） */
+  image: string
+  /**
+   * 体のこま。stand（立つ）は必ず要る。walk・run・jump・cheer・surprised・point・laugh・bow など、
+   * 無いものは stand で代わりにする。絵は右向き（左向きは、部品がうら返す）
+   */
+  poses: Record<string, Frame>
+  /** 顔のこま（話のときに出す）。happy・surprised・sad・keen */
+  faces: Record<string, Frame>
+  /** 画面での背の高さ（中の単位。無ければ 62） */
+  height?: number
+}
+
+/** 登場人物の組 */
+export interface Cast {
+  /** 主人公（動かす人） */
+  hero: Character
+  /** 案内役（はじまりの場所にいて、通行手形をくれる。さいごに、ご褒美をくれる） */
+  guide: Character
+  /** ライバル（町を走り回っていて、関所の場所を教えてくれる）。無くてもよい */
+  rival?: Character
+}
+
+export const poseOf = (ch: Character, pose: string): Frame => ch.poses[pose] ?? ch.poses.stand
+export const faceOf = (ch: Character, face = 'happy'): Frame | undefined => ch.faces[face] ?? ch.faces.happy ?? Object.values(ch.faces)[0]

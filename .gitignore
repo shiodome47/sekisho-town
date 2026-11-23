@@ -1,0 +1,7 @@
+node_modules
+dist
+examples/web/dist
+.vercel
+*.tgz
+.DS_Store
+__pycache__
