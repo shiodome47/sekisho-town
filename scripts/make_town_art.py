@@ -73,7 +73,8 @@ ART = {
     'alley': {},
     'pinewall': {'pinewall': True, 'holes': True},
     # 開いた城の門の向こうに見える、城の中の景色（はしまで絵が入っている。切り出さずに使う）
-    'courtyard': {'raw': True},
+    # 門ごしに遠くに見えるので、少しぼかして、うすくかすませる
+    'courtyard': {'raw': True, 'blur': 1.6, 'tint': ((228, 234, 230), 0.16)},
     'ground': {'raw': True, 'mirror': True},
     # 川の水は、空や地面のやわらかい色に合わせて、少しうすくする（tint: まぜる色と、その割合）
     'water': {'raw': True, 'mirror': True, 'tint': ((205, 228, 230), 0.38)},
@@ -137,6 +138,9 @@ def build(name, opt):
         # はしまで絵が入っているもの（路地）: 切り出さずに、大きさだけ合わせる
         target = round(unit_widths()[name] * PX_PER_UNIT)
         out = im.resize((target, round(im.height * target / im.width)), Image.LANCZOS)
+        if opt.get('blur'):
+            from PIL import ImageFilter
+            out = out.filter(ImageFilter.GaussianBlur(opt['blur']))
         if opt.get('tint'):
             color, k = opt['tint']
             out = Image.blend(out, Image.new('RGB', out.size, color), k)

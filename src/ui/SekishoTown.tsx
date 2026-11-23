@@ -29,7 +29,7 @@ import { FONT, INK, drawBackdrop, drawExitSign, drawGate, drawSky, text } from '
 import { JA_LABELS, type Labels, type Line, type StoryInfo } from './labels'
 import { Dialog, GatePanel, MapView, TouchPad } from './overlays'
 import type { SoundEvent } from './sound'
-import { drawActor, poseFor, useImages } from './sprites'
+import { cycleFrame, drawActor, poseFor, useImages } from './sprites'
 
 export interface SekishoTownProps {
   /** 関所めぐりのデータ（@shiodome47/sekisho と同じもの） */
@@ -626,8 +626,21 @@ export function SekishoTown({
       actors.push({
         y: p.y,
         draw: () => {
-          const bob = p.moving && p.z === 0 && !L.reduced ? Math.abs(Math.sin(f.t * (p.running ? 18 : 10))) * (p.running ? 2.4 : 1.2) : 0
-          drawActor(c, L.images.get(L.cast.hero.image), L.cast.hero, poseFor(L.cast.hero, p, f.t, emote, f.stride), p.x, p.y, { face: p.face, z: p.z, bob })
+          const hero = L.cast.hero
+          // 1 歩の中の進み具合（足音が鳴ったときが 0）
+          const period = p.running ? 0.24 : 0.36
+          const phase = Math.min(1, Math.max(0, 1 - f.stepIn / period))
+          const six = p.moving && p.z === 0 ? cycleFrame(hero, p.running ? 'run' : 'walk', f.stride, phase) : -1
+          // 6 こまの絵があるときは、走るときの「蹴って浮く」こま（3・6 こま目）だけ、少し浮かせる。無ければ、体を上下にゆらす
+          const bob =
+            six >= 0
+              ? p.running && six % 3 === 2 && !L.reduced
+                ? 3
+                : 0
+              : p.moving && p.z === 0 && !L.reduced
+                ? Math.abs(Math.sin(f.t * (p.running ? 18 : 10))) * (p.running ? 2.4 : 1.2)
+                : 0
+          drawActor(c, L.images.get(hero.image), hero, poseFor(hero, p, f.t, emote, f.stride, phase), p.x, p.y, { face: p.face, z: p.z, bob })
         },
       })
       actors.sort((a, b2) => a.y - b2.y).forEach((a) => a.draw())

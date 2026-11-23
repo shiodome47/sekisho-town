@@ -22,20 +22,31 @@ export function useImages(urls: string[]): Map<string, HTMLImageElement> {
 
 /** 今の動きから、どのこまを出すか */
 /**
- * 今の動きから、どのこまを出すか。
- * stride は、歩いた・走った歩数（足音が鳴るたびに 1 つ増える）。横から見た絵（walk1・walk2、run1・run2）があれば、
- * 歩数に合わせて、左足が前・右足が前を交互に出す。無ければ、stand・walk・run を時間で切りかえる
+ * 歩く・走るの 6 こまの、何こま目か（0〜5）。6 こまの絵（walk1〜walk6・run1〜run6）が無ければ -1。
+ * 1 歩を 3 こま（足が開く → すれ違う → 蹴って浮く）で出し、2 歩で 1 周する。
+ * stride は歩数（足音が鳴るたびに 1 つ増える）、phase は、その 1 歩の中の進み具合（0〜1）
  */
-export function poseFor(ch: Character, a: { moving: boolean; running: boolean; z: number }, t: number, emote?: string, stride = 0): Frame {
+export function cycleFrame(ch: Character, kind: 'walk' | 'run', stride: number, phase: number): number {
+  if (!ch.poses[`${kind}6`]) return -1
+  return (stride % 2) * 3 + Math.min(2, Math.max(0, Math.floor(phase * 3)))
+}
+
+/**
+ * 今の動きから、どのこまを出すか。
+ * stride は、歩いた・走った歩数（足音が鳴るたびに 1 つ増える）、phase は、その 1 歩の中の進み具合（0〜1）。
+ * - 6 こまの絵（walk1〜walk6・run1〜run6）があれば、順に出す
+ * - 2 こまの絵（walk1・walk2、run1・run2）だけなら、歩数に合わせて交互に出す
+ * - どれも無ければ、stand・walk・run を時間で切りかえる
+ */
+export function poseFor(ch: Character, a: { moving: boolean; running: boolean; z: number }, t: number, emote?: string, stride = 0, phase = 0): Frame {
   if (emote) return poseOf(ch, emote)
   if (a.z > 0) return poseOf(ch, 'jump')
   if (!a.moving) return poseOf(ch, 'stand')
-  const side = stride % 2 ? '2' : '1'
-  if (a.running) {
-    if (ch.poses.run1 && ch.poses.run2) return ch.poses[`run${side}`]
-    return poseOf(ch, Math.floor(t * 9) % 2 ? 'walk' : 'run')
-  }
-  if (ch.poses.walk1 && ch.poses.walk2) return ch.poses[`walk${side}`]
+  const kind = a.running ? 'run' : 'walk'
+  const six = cycleFrame(ch, kind, stride, phase)
+  if (six >= 0) return ch.poses[`${kind}${six + 1}`] ?? ch.poses[`${kind}1`]
+  if (ch.poses[`${kind}1`] && ch.poses[`${kind}2`]) return ch.poses[`${kind}${stride % 2 ? 2 : 1}`]
+  if (a.running) return poseOf(ch, Math.floor(t * 9) % 2 ? 'walk' : 'run')
   return poseOf(ch, Math.floor(t * 5) % 2 ? 'stand' : 'walk')
 }
 
