@@ -126,6 +126,11 @@ export interface TownSave {
   x?: number
   y?: number
   face?: 1 | -1
+  /**
+   * 項目を開いて、町の外（練習の画面）へ出たときに見ていた関所（関所の id）。
+   * 戻ってきたとき（autoResume）に、その関所の板を開いたところから始める（0.12.0）
+   */
+  openGate?: string
   /** 見つけた関所（`${courseId}|${lap}|${gateId}`） */
   found?: string[]
   /** 見た話・済んだこと（'intro' など。コースごとのものは `${courseId}|${lap}|finale`） */

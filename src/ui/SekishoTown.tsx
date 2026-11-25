@@ -227,10 +227,13 @@ export function SekishoTown({
 
   // 前のつづきから（はじめの画面を出さない）
   const resumed = useRef(false)
+  const resumeGate = useRef<string | null>(null)
   useEffect(() => {
     if (!autoResume || resumed.current || screen !== 'title' || !course) return
     if (!fixedCourseId && saveRef.current.courseId !== course.id) return
     resumed.current = true
+    // 項目を開いて出ていたなら、戻ってきたら、その関所の板を開いたところから（つぎの項目を、すぐ開けるように）
+    resumeGate.current = saveRef.current.openGate ?? null
     begin(course.id)
   }, [autoResume, screen, course, fixedCourseId, begin])
 
@@ -259,7 +262,6 @@ export function SekishoTown({
       addFlag(`told${view.cleared}`)
       say(labels.afterClear(storyInfo()))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, course?.id, lap])
 
   // ─── 関所をこえたのを見つける（自分で押したときも、アプリが report で進めたときも） ───
@@ -699,6 +701,17 @@ export function SekishoTown({
   }, [toast])
 
   // ─── 関所の板 ───
+  // 戻ってきたとき: 出る前に見ていた関所の板を開く。もうこえた関所なら開かない（番人の話・演出にまかせる）
+  useEffect(() => {
+    if (screen !== 'play') return
+    const id = resumeGate.current
+    resumeGate.current = null
+    if (saveRef.current.openGate) updateSave({ openGate: undefined })
+    if (!id) return
+    const g = gates.find((x) => x.view.gate.id === id)
+    if (g && g.view.open && !g.view.cleared) setGateId(id)
+    // 町に入ったとき（screen が play になったとき）だけ見る
+  }, [screen])
   const openGate = gateId ? gates.find((g) => g.view.gate.id === gateId) : undefined
   const change = (fn: (d: SekishoData, courseId: string, itemId: string, now: Date) => Changes, item: CheckItem) => {
     if (!course) return
@@ -828,7 +841,12 @@ export function SekishoTown({
           color={course.color}
           labels={labels}
           targets={resolved}
-          onOpenItem={(item) => item.target && resolved.open(item.target, item)}
+          onOpenItem={(item) => {
+            if (!item.target) return
+            // 町の外へ出るかもしれないので、見ていた関所を覚えておく（戻ってきたら、この板から）
+            updateSave({ openGate: openGate.view.gate.id })
+            resolved.open(item.target, item)
+          }}
           onPlus={(item) => change(addOne, item)}
           onMinus={(item) => change(removeOne, item)}
           onToggle={(item) => change(toggleItem, item)}
