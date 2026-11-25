@@ -138,6 +138,53 @@ const player = createSoundPlayer({
 - ブラウザは、使う人が画面にさわるまで音を出しません。鳴らせなかったときは、何もしません
 - 自分で鳴らしたいとき（Web Audio など）は、`onSound` に自分の関数を渡します
 
+#### 町のために作りこんだ道具（`createTownSound`。0.14.0）
+
+`createSoundPlayer` は `<audio>` だけのかんたんな道具です。足音・町の音・通りごとの曲・印のあとの短い曲まで鳴らすなら、`createTownSound` を使います（Web Audio。iPhone でも、さわったあとは、どこからでも鳴る）。
+
+```tsx
+import { SekishoTown, createTownSound } from '@shiodome47/sekisho-town'
+
+// 素材（mp3）は、アプリが自分のところに置いて、場所を渡す（部品は素材を持たない）
+const sound = createTownSound({ url: (name) => `/sound/town/${name}.mp3` })
+
+sound.preload() // 町に入る前に、短い音を読み込んでおく
+<SekishoTown muted={!soundOn} onSound={sound.play} … />
+```
+
+置く素材の名前（`TOWN_SOUND_FILES`）: `step`（足音）・`jump`・`talk`・`found`（関所を見つけた）・`stamp`（印）・`jingle-clear`（印のあとの短い曲）・`castle-gate`（城の門）・`music-castle`（城でのご褒美）・`ambience-street`・`ambience-river`（町の音）・`temple-bell`（寺町の鐘）・`music-town`・`music-kanki`（通りの曲。どの通りで流すかは `musicAreas` で変えられる）。無い素材は、鳴らないだけです。
+
+### おでかけ（練習の画面へ出て、町に戻る。0.14.0）
+
+関所の板で項目を開くと、アプリは練習の画面（動画など）へ移ります。そのあいだのことを、部品が受け持ちます。アプリが書くのは「練習を止める」と「画面を移る」だけです。
+
+```tsx
+import { TripReturn, createTripStore, tripAfterReport } from '@shiodome47/sekisho-town'
+import '@shiodome47/sekisho-town/style.css'
+
+// 1. おでかけの覚え（この端末に覚える）
+export const trip = createTripStore({ storageKey: 'my-app-trip' })
+
+// 2. 町で項目を開くとき（targets.open の中で）・町の画面に入ったとき
+trip.leave('town')
+trip.arrive('town')
+<SekishoTown autoResume={/* 町から出ていて、戻ってきた */} … />
+
+// 3. 練習が 1 つ進んだあと（sekisho の report のあと）
+const r = tripAfterReport(trip.get(), { reachedTitle, gateCleared })
+if (r.pause) pauseMyPlayer() // 止めないと、回数を終えても、いつまでもくり返される
+if (r.done) trip.setDone(r.done.title, r.done.gate) // 「できた！ 町にもどる」のさそい
+if (r.celebrateHere) showCelebration() // 町から出ているときは false（町に戻ってから、町が印を押す）
+
+// 4. どの画面の上にも置いておく
+<TripReturn trip={trip} here={いまの画面が町なら 'town'} onBack={(from) => navigate(from === 'town' ? '/town' : '/courses')} />
+```
+
+- `<TripReturn>`: 練習の画面の下に「🏯 町にもどる」。× で右下の小さいボタンになる（消えない）。項目の回数に届くと「✓ できた！」と大きい「町にもどる」でさそう
+- 戻る先は 2 つ: `'town'`（町のゲーム）と `'course'`（コースの画面。`trip.leave('course')`。ボタンは「📜 関所にもどる」）
+- 町に戻ったあと、見ていた関所の板を開く・出ているあいだにこえた関所の印を押すのは、`<SekishoTown autoResume>` がする（`TownSave.openGate`・`awayCleared`）
+- 文言は `labels`（`JA_TRIP_LABELS`）で変えられる
+
 ### 町の絵を変える
 
 町の絵は、3 つのやり方で変えられます。小さく直すほうから:
