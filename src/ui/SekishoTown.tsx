@@ -228,12 +228,15 @@ export function SekishoTown({
   // 前のつづきから（はじめの画面を出さない）
   const resumed = useRef(false)
   const resumeGate = useRef<string | null>(null)
+  const resumeCleared = useRef<string[] | null>(null)
   useEffect(() => {
     if (!autoResume || resumed.current || screen !== 'title' || !course) return
     if (!fixedCourseId && saveRef.current.courseId !== course.id) return
     resumed.current = true
     // 項目を開いて出ていたなら、戻ってきたら、その関所の板を開いたところから（つぎの項目を、すぐ開けるように）
     resumeGate.current = saveRef.current.openGate ?? null
+    // 出ているあいだにこえた関所は、町に戻ってから、印を押す演出を出す（出る前にこえていた関所を、ここで渡す）
+    resumeCleared.current = saveRef.current.awayCleared ?? null
     begin(course.id)
   }, [autoResume, screen, course, fixedCourseId, begin])
 
@@ -258,6 +261,8 @@ export function SekishoTown({
     if (!view.started && !complete && !flags.includes(flagKey(course.id, lap, 'intro'))) {
       addFlag('intro')
       say(labels.intro(storyInfo()))
+    } else if (resumeCleared.current && view.gates.some((g) => g.cleared && !resumeCleared.current!.includes(g.gate.id))) {
+      // 出ているあいだにこえた関所がある: 先に、印を押す演出を出す（番人の話は、そのあと）
     } else if (view.cleared > 0 && !finaleDone && !flags.includes(flagKey(course.id, lap, `told${view.cleared}`))) {
       addFlag(`told${view.cleared}`)
       say(labels.afterClear(storyInfo()))
@@ -275,6 +280,11 @@ export function SekishoTown({
       known.current = { key, ids: now }
       return
     }
+    // 練習の画面から戻ってきた: 出る前にこえていた関所と比べる（出ているあいだにこえた関所の演出を、ここで出す）
+    if (screen === 'play' && resumeCleared.current) {
+      known.current.ids = new Set(resumeCleared.current)
+      resumeCleared.current = null
+    }
     const fresh = view.gates.filter((g) => g.cleared && !known.current.ids.has(g.gate.id))
     known.current.ids = now
     if (!fresh.length || screen !== 'play') return
@@ -282,10 +292,9 @@ export function SekishoTown({
     if (view.gates.every((g) => g.cleared)) sound({ name: 'complete' })
     let cleared = view.cleared - fresh.length
     lastCleared.current = fresh[fresh.length - 1].gate.id
-    setEvents((q) => [
-      ...q,
-      ...fresh.map((g): ClearEvent => ({ kind: 'gate', course, gate: g.gate, cleared: ++cleared, total: view.total, at: g.clearedAt ?? new Date().toISOString() })),
-    ])
+    // 数えるのは、ここで 1 回だけ（setEvents の中で数えると、2 回呼ばれたときに、数がずれる）
+    const added = fresh.map((g): ClearEvent => ({ kind: 'gate', course, gate: g.gate, cleared: ++cleared, total: view.total, at: g.clearedAt ?? new Date().toISOString() }))
+    setEvents((q) => [...q, ...added])
   }, [view, course, lap, screen])
 
   const afterCelebration = () => {
@@ -706,7 +715,7 @@ export function SekishoTown({
     if (screen !== 'play') return
     const id = resumeGate.current
     resumeGate.current = null
-    if (saveRef.current.openGate) updateSave({ openGate: undefined })
+    if (saveRef.current.openGate || saveRef.current.awayCleared) updateSave({ openGate: undefined, awayCleared: undefined })
     if (!id) return
     const g = gates.find((x) => x.view.gate.id === id)
     if (g && g.view.open && !g.view.cleared) setGateId(id)
@@ -844,7 +853,7 @@ export function SekishoTown({
           onOpenItem={(item) => {
             if (!item.target) return
             // 町の外へ出るかもしれないので、見ていた関所を覚えておく（戻ってきたら、この板から）
-            updateSave({ openGate: openGate.view.gate.id })
+            updateSave({ openGate: openGate.view.gate.id, awayCleared: view ? view.gates.filter((g) => g.cleared).map((g) => g.gate.id) : [] })
             resolved.open(item.target, item)
           }}
           onPlus={(item) => change(addOne, item)}
