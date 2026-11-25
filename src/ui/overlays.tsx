@@ -298,13 +298,15 @@ export function TouchPad({
 }: {
   onStick: (x: number, y: number) => void
   onAct: () => void
-  onJump: () => void
+  /** とぶ。dir は、ボタンの右寄りを押したら 1（右へとぶ）、左寄りなら -1（左へとぶ）、まん中なら 0（その場で） */
+  onJump: (dir: -1 | 0 | 1) => void
   actLabel: string
   jumpLabel: string
 }) {
   const [knob, setKnob] = useState({ x: 0, y: 0 })
   const origin = useRef<{ id: number; x: number; y: number } | null>(null)
-  const R = 44
+  // 丸のまん中から、これだけ指を動かすと、いっぱいにたおしたことになる（px）
+  const R = 52
   const move = (e: React.PointerEvent) => {
     const o = origin.current
     if (!o || o.id !== e.pointerId) return
@@ -331,18 +333,38 @@ export function TouchPad({
         onPointerDown={(e) => {
           const r = e.currentTarget.getBoundingClientRect()
           origin.current = { id: e.pointerId, x: r.left + r.width / 2, y: r.top + r.height / 2 }
-          e.currentTarget.setPointerCapture(e.pointerId)
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId)
+          } catch {
+            // つかめなくても、動かせる
+          }
           move(e)
         }}
         onPointerMove={move}
         onPointerUp={end}
         onPointerCancel={end}
       >
-        <span className="st-stick__knob" style={{ transform: `translate(${knob.x * 26}px, ${knob.y * 26}px)` }} />
+        <span className="st-stick__knob" style={{ transform: `translate(${knob.x * 40}px, ${knob.y * 40}px)` }} />
       </div>
       <div className="st-pad__buttons">
-        <button type="button" className="st-pad__btn st-pad__btn--b" onPointerDown={(e) => (e.preventDefault(), onJump())}>
+        <button
+          type="button"
+          className="st-pad__btn st-pad__btn--b"
+          onPointerDown={(e) => {
+            e.preventDefault()
+            // ボタンの左 3 分の 1・右 3 分の 1 を押したら、そちらへとぶ
+            const r = e.currentTarget.getBoundingClientRect()
+            const at = (e.clientX - r.left) / r.width
+            onJump(at < 1 / 3 ? -1 : at > 2 / 3 ? 1 : 0)
+          }}
+        >
+          <span className="st-pad__arrow" aria-hidden="true">
+            ◀
+          </span>
           {jumpLabel}
+          <span className="st-pad__arrow" aria-hidden="true">
+            ▶
+          </span>
         </button>
         <button type="button" className="st-pad__btn st-pad__btn--a" onPointerDown={(e) => (e.preventDefault(), onAct())}>
           {actLabel}

@@ -137,7 +137,7 @@ export function SekishoTown({
 
   // ─── ゲームの今（描くたびに変わるものは ref） ───
   const worldRef = useRef<World>({ area: town.start.area, player: newActor(town.start.x) })
-  const input = useRef({ keys: new Set<string>(), stick: { x: 0, y: 0 }, act: false, jump: false })
+  const input = useRef({ keys: new Set<string>(), stick: { x: 0, y: 0 }, act: false, jump: false, jumpDir: 0 })
   const fx = useRef({ t: 0, fade: 0, emote: '', emoteUntil: 0, bang: 0, blockedAt: -9, stepIn: 0, stride: 0, gateAt: -1 })
   const [areaId, setAreaId] = useState(town.start.area)
   const [near, setNear] = useState<{ id: string; kind: string } | null>(null)
@@ -500,10 +500,24 @@ export function SekishoTown({
         const ky = (keys.has('ArrowDown') || keys.has('s') ? 1 : 0) - (keys.has('ArrowUp') || keys.has('w') ? 1 : 0)
         const stick = inp.stick
         const usingKeys = kx !== 0 || ky !== 0
-        const x = usingKeys ? kx : stick.x
-        const y = usingKeys ? ky : stick.y
-        // キーは、ふつうは走る（Shift で歩く）。指は、大きくたおすと走る
-        const run = usingKeys ? !keys.has('Shift') : Math.hypot(stick.x, stick.y) > 0.72
+        let x = usingKeys ? kx : stick.x
+        let y = usingKeys ? ky : stick.y
+        // キーは、ふつうは走る（Shift で歩く）。指は、半分ほどたおすと走る（走るときは、たおした量によらず、同じ速さ）
+        const tilt = Math.hypot(stick.x, stick.y)
+        let run = usingKeys ? !keys.has('Shift') : tilt > 0.5
+        if (!usingKeys && run) {
+          x = stick.x / tilt
+          y = stick.y / tilt
+        }
+        // 「とぶ」の右寄り・左寄りを押した: 地面に着くまで、そちらへ進む（丸・キーで動かしていれば、そちらが先）
+        if (inp.jumpDir) {
+          if (!inp.jump && world.player.z === 0) inp.jumpDir = 0
+          else if (!usingKeys && tilt < 0.18) {
+            x = inp.jumpDir
+            y = 0
+            run = true
+          }
+        }
         if (inp.jump && world.player.z === 0) L.sound({ name: 'jump' })
         const r = step(L.town, world, { x, y, run, jump: inp.jump }, dt, (e) => e.lock === 'finale' && !L.complete)
         world = r.world
@@ -799,7 +813,10 @@ export function SekishoTown({
         <TouchPad
           onStick={(x, y) => (input.current.stick = { x, y })}
           onAct={() => actRef.current()}
-          onJump={() => (input.current.jump = true)}
+          onJump={(dir) => {
+            input.current.jump = true
+            input.current.jumpDir = dir
+          }}
           actLabel={dialog ? '▼' : nearLabel}
           jumpLabel={labels.jump}
         />
