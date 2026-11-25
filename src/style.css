@@ -746,3 +746,118 @@
     animation: none;
   }
 }
+
+/* ─── おでかけ（練習の画面の上に出す「町にもどる」。0.14.0）───
+   町の外（アプリの画面の上）に出すので、.sekisho-town の中ではなく、.sekisho-town-trip の中だけに効く */
+.sekisho-town-trip {
+  --st-ink: #3a2a22;
+  --st-paper: #f6ecd4;
+  --st-paper-2: #ead9b4;
+  --st-accent: #c0392b;
+  position: fixed;
+  z-index: 50;
+  bottom: 16px;
+  margin-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+  border: 2px solid var(--st-ink);
+  background: var(--st-paper);
+  color: var(--st-ink);
+  font-family: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  line-height: 1.5;
+}
+.sekisho-town-trip button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.sekisho-town-trip .st-trip__main:hover,
+.sekisho-town-trip .st-trip__side:hover {
+  background: var(--st-paper-2);
+}
+.sekisho-town-trip.st-trip--pill,
+.sekisho-town-trip.st-trip--small {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 999px;
+}
+.sekisho-town-trip.st-trip--pill {
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+.sekisho-town-trip.st-trip--pill .st-trip__main {
+  white-space: nowrap;
+  padding: 10px 12px 10px 20px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.sekisho-town-trip.st-trip--pill .st-trip__side {
+  padding: 0 12px;
+  font-size: 18px;
+  line-height: 1;
+  border-left: 1px solid color-mix(in srgb, var(--st-ink) 40%, transparent);
+}
+.sekisho-town-trip.st-trip--small {
+  right: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.sekisho-town-trip.st-trip--small .st-trip__main {
+  padding: 8px 12px;
+  font-size: 20px;
+  line-height: 1;
+}
+.sekisho-town-trip.st-trip--small .st-trip__side {
+  padding: 0 8px;
+  font-size: 14px;
+  line-height: 1;
+  border-left: 1px solid color-mix(in srgb, var(--st-ink) 40%, transparent);
+}
+.sekisho-town-trip.st-trip--done {
+  left: 12px;
+  right: 12px;
+  max-width: 24rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 12px 16px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+.sekisho-town-trip .st-trip__title,
+.sekisho-town-trip .st-trip__gate {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.sekisho-town-trip .st-trip__gate {
+  margin-top: 4px;
+  color: var(--st-accent);
+}
+.sekisho-town-trip .st-trip__go {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--st-accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.sekisho-town-trip .st-trip__go:hover {
+  filter: brightness(0.92);
+}
+.sekisho-town-trip .st-trip__more {
+  margin-top: 6px;
+  font-size: 12px;
+  text-decoration: underline;
+  opacity: 0.8;
+}
+.sekisho-town-trip .st-trip__more:hover {
+  opacity: 1;
+}
