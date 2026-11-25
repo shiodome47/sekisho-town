@@ -1,6 +1,6 @@
 {
   "name": "@shiodome47/sekisho-town",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "関所めぐりの町: 時代劇の城下町を走り回って関所をさがし、学びをくり返して通行手形に印を集めるゲームの土台。中身（コース）は @shiodome47/sekisho のものを入れ替えて使う",
   "keywords": [
     "gamification",
